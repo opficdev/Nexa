@@ -27,6 +27,17 @@ jobs:
         working-directory: Nexa
         run: swift build
 
+  test:
+    name: Swift Test
+    needs: build
+    if: ${{ needs.build.result == 'success' }}
+    uses: ./.github/workflows/test.yml
+    with:
+      pr_number: ${{ github.event.pull_request.number }}
+      pr_actor: ${{ github.actor }}
+      pr_head_ref: ${{ github.event.pull_request.head.ref }}
+      pr_head_sha: ${{ github.event.pull_request.head.sha }}
+
   notify_pr_failure:
     name: Notify PR Failure (Build)
     needs: build
