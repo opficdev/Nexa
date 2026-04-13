@@ -1,7 +1,4 @@
 # Nexa
-A SwiftUI-inspired declarative networking library built on URLSession.
-@ -1,2 +1,301 @@
-# Nexa
 
 [![Build](https://github.com/opficdev/Nexa/actions/workflows/build.yml/badge.svg)](https://github.com/opficdev/Nexa/actions/workflows/build.yml)
 [![Swift](https://img.shields.io/badge/Swift-6.1-orange?style=flat-square)](https://www.swift.org)
