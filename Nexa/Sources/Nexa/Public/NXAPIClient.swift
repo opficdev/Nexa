@@ -38,6 +38,10 @@ public struct NXAPIClient: Sendable {
         endpoint.configure(request(method: endpoint.method, path: endpoint.path))
     }
 
+    public func send<E: NXEndpoint>(_ endpoint: E) async throws -> E.Response {
+        try await request(endpoint).send(as: E.Response.self)
+    }
+
     func request(method: NXHTTPMethod, path: String) -> NXRequestBuilder {
         NXRequestBuilder(clientConfiguration: clientConfiguration, requestSpec: RequestSpec(method: method, path: path))
     }

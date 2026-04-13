@@ -67,21 +67,42 @@ public struct NXRequestBuilder: Sendable {
         }
     }
 
+    public func retry(_ policy: NXRetryPolicy) -> Self {
+        modifying { requestSpec in
+            requestSpec.retryPolicy = policy
+        }
+    }
+
+    public func validate(_ policy: NXValidationPolicy) -> Self {
+        modifying { requestSpec in
+            requestSpec.validationPolicy = policy
+        }
+    }
+
+    public func intercept(_ interceptor: any NXHTTPInterceptor) -> Self {
+        modifying { requestSpec in
+            requestSpec.requestInterceptors.append(interceptor)
+        }
+    }
+
     public func preparedURLRequest() async throws -> URLRequest {
         try NXRequestAssembler.assemble(clientConfiguration: clientConfiguration, requestSpec: requestSpec)
     }
 
     public func raw() async throws -> NXRawResponse {
-        throw NXError.invalidRequest("Request execution API is configured before request build logic.")
+        try await NXRequestExecutor.executeRaw(clientConfiguration: clientConfiguration, requestSpec: requestSpec)
     }
 
     public func send<T: Decodable>(as type: T.Type) async throws -> T {
-        _ = type
-        throw NXError.invalidRequest("Request execution API is configured before request build logic.")
+        try await NXRequestExecutor.executeDecode(
+            clientConfiguration: clientConfiguration,
+            requestSpec: requestSpec,
+            responseType: type
+        )
     }
 
     public func sendVoid() async throws {
-        throw NXError.invalidRequest("Request execution API is configured before request build logic.")
+        _ = try await raw()
     }
 
     func modifying(_ update: (inout RequestSpec) throws -> Void) rethrows -> Self {
