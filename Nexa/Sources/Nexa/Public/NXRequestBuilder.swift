@@ -30,9 +30,7 @@ public struct NXRequestBuilder: Sendable {
 
     public func headers(_ values: [String: String]) -> Self {
         modifying { requestSpec in
-            values.forEach { key, value in
-                requestSpec.headers[key] = value
-            }
+            requestSpec.headers.merge(values) { _, newValue in newValue }
         }
     }
 
