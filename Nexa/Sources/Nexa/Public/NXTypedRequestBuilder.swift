@@ -50,8 +50,12 @@ public struct NXTypedRequestBuilder<Response>: Sendable where Response: Decodabl
         try Self(requestBuilder: requestBuilder.json(value, encoder: encoder))
     }
 
-    public func body(_ data: Data, contentType: String) -> Self {
-        Self(requestBuilder: requestBuilder.body(data, contentType: contentType))
+    public func body(_ data: Data) -> Self {
+        Self(requestBuilder: requestBuilder.body(data))
+    }
+
+    public func contentType(_ value: String) -> Self {
+        Self(requestBuilder: requestBuilder.contentType(value))
     }
 
     public func retry(_ policy: NXRetryPolicy) -> Self {

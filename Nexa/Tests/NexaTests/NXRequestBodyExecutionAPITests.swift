@@ -47,14 +47,15 @@ struct NXRequestBodyExecutionAPITests {
         #expect(dictionary["userName"] as? String == "opfic")
     }
 
-    @Test("body modifier는 데이터를 body에 저장하고 Content-Type을 헤더에 설정한다")
+    @Test("body와 contentType modifier는 데이터를 body와 헤더에 각각 저장한다")
     func rawBodyStoresDataAndHeader() {
         let client = makeClient()
         let payload = Data("hello".utf8)
 
         let builder = client
             .post("/users")
-            .body(payload, contentType: "text/plain")
+            .body(payload)
+            .contentType("text/plain")
 
         guard case let .data(data) = builder.requestSpec.body else {
             Issue.record("body data not found")

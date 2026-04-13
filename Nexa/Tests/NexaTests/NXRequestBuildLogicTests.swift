@@ -20,7 +20,8 @@ struct NXRequestBuildLogicTests {
             .query("page", 1)
             .header("X-Trace", "abc")
             .timeout(5)
-            .body(Data("hello".utf8), contentType: "text/plain")
+            .body(Data("hello".utf8))
+            .contentType("text/plain")
             .preparedURLRequest()
 
         #expect(request.httpMethod == "POST")
