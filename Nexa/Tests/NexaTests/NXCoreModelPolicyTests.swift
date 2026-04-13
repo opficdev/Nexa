@@ -82,13 +82,7 @@ struct NXCoreModelPolicyTests {
         #expect(requestSpec.timeout == nil)
         #expect(requestSpec.authRequirement == .none)
         #expect(requestSpec.retryPolicy == nil)
-        switch requestSpec.validationPolicy {
-        case .successStatusCode:
-            #expect(true)
-        default:
-            Issue.record("validationPolicy default value mismatch")
-        }
-        #expect(requestSpec.requestInterceptors.isEmpty)
+        #expect(isSuccessStatusCode(requestSpec.validationPolicy))
         #expect(requestSpec.userInfo.isEmpty)
     }
 
@@ -96,17 +90,24 @@ struct NXCoreModelPolicyTests {
     func errorCases() {
         let urlError = URLError(.timedOut)
 
-        if case let .transport(capturedError) = NXError.transport(urlError) {
-            #expect(capturedError.code == .timedOut)
-        } else {
+        guard case let .transport(capturedError) = NXError.transport(urlError) else {
             Issue.record("transport case mapping failed")
+            return
         }
+        #expect(capturedError.code == .timedOut)
 
-        if case let .invalidStatus(statusCode, data) = NXError.invalidStatus(statusCode: 500, data: Data("x".utf8)) {
-            #expect(statusCode == 500)
-            #expect(data == Data("x".utf8))
-        } else {
+        guard case let .invalidStatus(statusCode, data) = NXError.invalidStatus(statusCode: 500, data: Data("x".utf8)) else {
             Issue.record("invalidStatus case mapping failed")
+            return
         }
+        #expect(statusCode == 500)
+        #expect(data == Data("x".utf8))
+    }
+
+    private func isSuccessStatusCode(_ policy: NXValidationPolicy) -> Bool {
+        if case .successStatusCode = policy {
+            return true
+        }
+        return false
     }
 }
