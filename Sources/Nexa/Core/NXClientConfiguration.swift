@@ -40,7 +40,7 @@ public struct NXClientConfiguration: Sendable {
     public let logger: any NXLogger
     /// Interceptors applied to every request.
     public let interceptors: [any NXHTTPInterceptor]
-    /// Decoder used by typed requests when no custom decoder is provided elsewhere.
+    /// Decoder used by typed requests to decode the response body.
     public let decoder: JSONDecoder
     /// Encoder used for JSON request bodies when no encoder is passed to `json(_:encoder:)`.
     public let encoder: JSONEncoder
