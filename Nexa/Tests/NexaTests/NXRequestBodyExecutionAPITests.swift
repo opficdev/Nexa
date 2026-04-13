@@ -19,7 +19,7 @@ struct NXRequestBodyExecutionAPITests {
 
         let builder = try client.post("/users").json(UserPayload(userName: "opfic"))
 
-        guard case let .data(data, _) = builder.requestSpec.body else {
+        guard case let .data(data) = builder.requestSpec.body else {
             Issue.record("body data not found")
             return
         }
@@ -38,7 +38,7 @@ struct NXRequestBodyExecutionAPITests {
 
         let builder = try client.post("/users").json(UserPayload(userName: "opfic"), encoder: overrideEncoder)
 
-        guard case let .data(data, _) = builder.requestSpec.body else {
+        guard case let .data(data) = builder.requestSpec.body else {
             Issue.record("body data not found")
             return
         }
@@ -56,13 +56,12 @@ struct NXRequestBodyExecutionAPITests {
             .post("/users")
             .body(payload, contentType: "text/plain")
 
-        guard case let .data(data, contentType) = builder.requestSpec.body else {
+        guard case let .data(data) = builder.requestSpec.body else {
             Issue.record("body data not found")
             return
         }
 
         #expect(data == payload)
-        #expect(contentType == "text/plain")
         #expect(builder.requestSpec.headers["Content-Type"] == "text/plain")
     }
 
