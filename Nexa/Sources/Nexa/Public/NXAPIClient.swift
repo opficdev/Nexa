@@ -67,6 +67,6 @@ public struct NXAPIClient: Sendable {
     }
 
     func typedRequest<Response: Decodable>(method: NXHTTPMethod, path: String) -> NXTypedRequestBuilder<Response> {
-        NXTypedRequestBuilder(clientConfiguration: clientConfiguration, requestSpec: RequestSpec(method: method, path: path))
+        request(method: method, path: path).as(Response.self)
     }
 }
