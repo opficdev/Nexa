@@ -184,7 +184,7 @@ sequenceDiagram
         Transport-->>Chain: NXRawResponse
         Chain-->>Builder: NXRawResponse
         Builder->>Pipeline: validate()
-        Pipeline-->>Builder: NXRawResponse
+        Pipeline-->>Builder: validated
         Builder-->>App: NXRawResponse
     else send()
         Builder->>Assembler: assemble()
