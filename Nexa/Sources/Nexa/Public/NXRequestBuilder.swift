@@ -93,10 +93,6 @@ public struct NXRequestBuilder: Sendable {
         try await NXRequestExecutor.executeRaw(clientConfiguration: clientConfiguration, requestSpec: requestSpec)
     }
 
-    public func sendVoid() async throws {
-        _ = try await raw()
-    }
-
     public func `as`<Response: Decodable>(_ type: Response.Type) -> NXTypedRequestBuilder<Response> {
         NXTypedRequestBuilder(requestBuilder: self)
     }

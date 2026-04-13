@@ -86,8 +86,4 @@ public struct NXTypedRequestBuilder<Response>: Sendable where Response: Decodabl
     public func send(as type: Response.Type) async throws -> Response {
         try await send()
     }
-
-    public func sendVoid() async throws {
-        try await requestBuilder.sendVoid()
-    }
 }

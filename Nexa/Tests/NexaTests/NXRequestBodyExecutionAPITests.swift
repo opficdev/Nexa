@@ -85,7 +85,7 @@ struct NXRequestBodyExecutionAPITests {
         let user = try await builder.as(UserDTO.self).send()
         #expect(user == UserDTO(id: 1, name: "opfic"))
 
-        try await builder.sendVoid()
+        _ = try await builder.raw()
     }
 
     private func makeClient(
