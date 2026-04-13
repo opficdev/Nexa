@@ -47,7 +47,7 @@ struct NXRequestBodyExecutionAPITests {
         #expect(dictionary["userName"] as? String == "opfic")
     }
 
-    @Test("body는 데이터와 Content-Type 헤더를 저장한다")
+    @Test("body modifier는 데이터를 body에 저장하고 Content-Type을 헤더에 설정한다")
     func rawBodyStoresDataAndHeader() {
         let client = makeClient()
         let payload = Data("hello".utf8)
