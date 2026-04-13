@@ -39,4 +39,27 @@ enum NXResponsePipeline {
             throw NXError.decoding(error, data: rawResponse.data)
         }
     }
+
+    static func map(error: any Error) -> NXError {
+        if let nxError = error as? NXError {
+            return nxError
+        }
+
+        if let urlError = error as? URLError {
+            switch urlError.code {
+            case .timedOut:
+                return .timeout
+            case .cancelled:
+                return .cancelled
+            default:
+                return .transport(urlError)
+            }
+        }
+
+        if error is CancellationError {
+            return .cancelled
+        }
+
+        return .unknown(error)
+    }
 }
