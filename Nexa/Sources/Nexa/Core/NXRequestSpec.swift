@@ -22,6 +22,7 @@ struct RequestSpec: Sendable {
     var authRequirement: NXAuthRequirement
     var retryPolicy: NXRetryPolicy?
     var validationPolicy: NXValidationPolicy
+    var requestInterceptors: [any NXHTTPInterceptor]
     var userInfo: [String: String]
     var requestIdentifier: UUID
 
@@ -35,6 +36,7 @@ struct RequestSpec: Sendable {
         authRequirement = .none
         retryPolicy = nil
         validationPolicy = .successStatusCode
+        requestInterceptors = []
         userInfo = [:]
         requestIdentifier = UUID()
     }
