@@ -7,9 +7,13 @@
 
 import Foundation
 
+/// Rules that determine whether a response status code is treated as successful.
 public enum NXValidationPolicy: Sendable {
+    /// Disables status code validation.
     case none
+    /// Accepts status codes in the `200..<300` range.
     case successStatusCode
+    /// Accepts only the provided set of status codes.
     case statusCodes(Set<Int>)
 
     func allows(statusCode: Int) -> Bool {

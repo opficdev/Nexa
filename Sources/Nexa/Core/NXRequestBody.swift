@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// Request body representations supported by Nexa.
 public enum NXRequestBody: Sendable {
     case data(Data)
 

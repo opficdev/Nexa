@@ -7,6 +7,7 @@
 
 import Foundation
 
+/// HTTP methods supported by Nexa request builders.
 public enum NXHTTPMethod: String, Sendable {
     case get = "GET"
     case post = "POST"
