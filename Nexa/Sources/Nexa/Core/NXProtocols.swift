@@ -11,6 +11,18 @@ public protocol NXHTTPTransport: Sendable {
     func send(_ request: URLRequest) async throws -> NXRawResponse
 }
 
+public protocol NXServerErrorDecoder: Sendable {
+    func decodeServerError(data: Data, response: HTTPURLResponse, decoder: JSONDecoder) -> (any Error)?
+}
+
+public struct NXDefaultServerErrorDecoder: NXServerErrorDecoder {
+    public init() {}
+
+    public func decodeServerError(data: Data, response: HTTPURLResponse, decoder: JSONDecoder) -> (any Error)? {
+        nil
+    }
+}
+
 public protocol NXAuthTokenProvider: Sendable {
     func currentAccessToken() async throws -> String?
     func refreshAccessToken() async throws -> String?
