@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct NXRequestBuilder: Sendable {
+public struct NXRequestBuilder<Response>: Sendable {
     let clientConfiguration: NXClientConfiguration
     let requestSpec: RequestSpec
 
@@ -93,14 +93,6 @@ public struct NXRequestBuilder: Sendable {
         try await NXRequestExecutor.executeRaw(clientConfiguration: clientConfiguration, requestSpec: requestSpec)
     }
 
-    public func send<T: Decodable>(as type: T.Type) async throws -> T {
-        try await NXRequestExecutor.executeDecode(
-            clientConfiguration: clientConfiguration,
-            requestSpec: requestSpec,
-            responseType: type
-        )
-    }
-
     public func sendVoid() async throws {
         _ = try await raw()
     }
@@ -109,5 +101,20 @@ public struct NXRequestBuilder: Sendable {
         var copiedRequestSpec = requestSpec
         try update(&copiedRequestSpec)
         return Self(clientConfiguration: clientConfiguration, requestSpec: copiedRequestSpec)
+    }
+}
+
+public extension NXRequestBuilder where Response: Decodable {
+    func send() async throws -> Response {
+        try await NXRequestExecutor.executeDecode(
+            clientConfiguration: clientConfiguration,
+            requestSpec: requestSpec,
+            responseType: Response.self
+        )
+    }
+
+    @available(*, deprecated, message: "send()를 사용하세요.")
+    func send(as type: Response.Type) async throws -> Response {
+        try await send()
     }
 }

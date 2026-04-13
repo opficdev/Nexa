@@ -14,35 +14,35 @@ public struct NXAPIClient: Sendable {
         clientConfiguration = configuration
     }
 
-    public func get(_ path: String) -> NXRequestBuilder {
+    public func get<Response>(_ path: String) -> NXRequestBuilder<Response> {
         request(method: .get, path: path)
     }
 
-    public func post(_ path: String) -> NXRequestBuilder {
+    public func post<Response>(_ path: String) -> NXRequestBuilder<Response> {
         request(method: .post, path: path)
     }
 
-    public func put(_ path: String) -> NXRequestBuilder {
+    public func put<Response>(_ path: String) -> NXRequestBuilder<Response> {
         request(method: .put, path: path)
     }
 
-    public func patch(_ path: String) -> NXRequestBuilder {
+    public func patch<Response>(_ path: String) -> NXRequestBuilder<Response> {
         request(method: .patch, path: path)
     }
 
-    public func delete(_ path: String) -> NXRequestBuilder {
+    public func delete<Response>(_ path: String) -> NXRequestBuilder<Response> {
         request(method: .delete, path: path)
     }
 
-    public func request<E: NXEndpoint>(_ endpoint: E) -> NXRequestBuilder {
+    public func request<E: NXEndpoint>(_ endpoint: E) -> NXRequestBuilder<E.Response> {
         endpoint.configure(request(method: endpoint.method, path: endpoint.path))
     }
 
     public func send<E: NXEndpoint>(_ endpoint: E) async throws -> E.Response {
-        try await request(endpoint).send(as: E.Response.self)
+        try await request(endpoint).send()
     }
 
-    func request(method: NXHTTPMethod, path: String) -> NXRequestBuilder {
+    func request<Response>(method: NXHTTPMethod, path: String) -> NXRequestBuilder<Response> {
         NXRequestBuilder(clientConfiguration: clientConfiguration, requestSpec: RequestSpec(method: method, path: path))
     }
 }
