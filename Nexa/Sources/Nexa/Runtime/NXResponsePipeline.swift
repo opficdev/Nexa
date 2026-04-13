@@ -27,4 +27,16 @@ enum NXResponsePipeline {
             throw NXError.invalidStatus(statusCode: statusCode, data: rawResponse.data)
         }
     }
+
+    static func decode<T: Decodable>(
+        clientConfiguration: NXClientConfiguration,
+        rawResponse: NXRawResponse,
+        responseType: T.Type
+    ) throws -> T {
+        do {
+            return try clientConfiguration.decoder.decode(responseType, from: rawResponse.data)
+        } catch {
+            throw NXError.decoding(error, data: rawResponse.data)
+        }
+    }
 }
