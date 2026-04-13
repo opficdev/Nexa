@@ -7,9 +7,13 @@
 
 import Foundation
 
+/// Retry behavior applied to a request when execution fails.
 public struct NXRetryPolicy: Sendable {
+    /// Delay strategy used between retry attempts.
     public enum Backoff: Sendable {
+        /// Uses a fixed delay for every retry attempt.
         case fixed(TimeInterval)
+        /// Doubles the delay every attempt until the maximum delay is reached.
         case exponential(base: TimeInterval, maxDelay: TimeInterval)
 
         func delay(forAttempt attemptNumber: Int) -> TimeInterval {
@@ -24,10 +28,19 @@ public struct NXRetryPolicy: Sendable {
         }
     }
 
+    /// Maximum number of attempts including the initial request.
     public var maxAttempts: Int
+    /// Delay strategy used between retry attempts.
     public var backoff: Backoff
+    /// HTTP status codes that are eligible for retry.
     public var retryableStatusCodes: Set<Int>
 
+    /// Creates a retry policy.
+    ///
+    /// - Parameters:
+    ///   - maxAttempts: Maximum number of attempts including the initial request.
+    ///   - backoff: Delay strategy used between retry attempts.
+    ///   - retryableStatusCodes: Status codes that should trigger a retry.
     public init(
         maxAttempts: Int,
         backoff: Backoff = .fixed(0),
