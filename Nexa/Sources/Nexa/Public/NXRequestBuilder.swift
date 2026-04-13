@@ -50,6 +50,23 @@ public struct NXRequestBuilder: Sendable {
         }
     }
 
+    public func json<T: Encodable>(_ value: T, encoder: JSONEncoder? = nil) throws -> Self {
+        let selectedEncoder = encoder ?? clientConfiguration.encoder
+        let encodedValue = try selectedEncoder.encode(value)
+
+        return modifying { requestSpec in
+            requestSpec.body = .data(encodedValue, contentType: "application/json; charset=utf-8")
+            requestSpec.headers["Content-Type"] = "application/json; charset=utf-8"
+        }
+    }
+
+    public func body(_ data: Data, contentType: String) -> Self {
+        modifying { requestSpec in
+            requestSpec.body = .data(data, contentType: contentType)
+            requestSpec.headers["Content-Type"] = contentType
+        }
+    }
+
     func modifying(_ update: (inout RequestSpec) throws -> Void) rethrows -> Self {
         var copiedRequestSpec = requestSpec
         try update(&copiedRequestSpec)
