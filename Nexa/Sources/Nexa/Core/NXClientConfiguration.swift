@@ -8,13 +8,13 @@
 import Foundation
 
 public struct NXClientConfiguration: Sendable {
-    public var baseURL: URL
-    public var headers: [String: String]
-    public var transport: any NXHTTPTransport
-    public var decoder: JSONDecoder
-    public var encoder: JSONEncoder
-    public var serverErrorDecoder: any NXServerErrorDecoder
-    public var authTokenProvider: (any NXAuthTokenProvider)?
+    public let baseURL: URL
+    public let headers: [String: String]
+    public let transport: any NXHTTPTransport
+    public let decoder: JSONDecoder
+    public let encoder: JSONEncoder
+    public let serverErrorDecoder: any NXServerErrorDecoder
+    public let authTokenProvider: (any NXAuthTokenProvider)?
 
     public init(
         baseURL: URL,
