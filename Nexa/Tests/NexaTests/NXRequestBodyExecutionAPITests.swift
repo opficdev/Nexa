@@ -17,7 +17,7 @@ struct NXRequestBodyExecutionAPITests {
         encoder.keyEncodingStrategy = .convertToSnakeCase
         let client = makeClient(encoder: encoder)
 
-        let builder = try client.post("/users").json(UserPayload(userName: "opfic"))
+        let builder: NXRequestBuilder<UserDTO> = try client.post("/users").json(UserPayload(userName: "opfic"))
 
         guard case let .data(data) = builder.requestSpec.body else {
             Issue.record("body data not found")
@@ -36,7 +36,7 @@ struct NXRequestBodyExecutionAPITests {
         let overrideEncoder = JSONEncoder()
         let client = makeClient(encoder: defaultEncoder)
 
-        let builder = try client.post("/users").json(UserPayload(userName: "opfic"), encoder: overrideEncoder)
+        let builder: NXRequestBuilder<UserDTO> = try client.post("/users").json(UserPayload(userName: "opfic"), encoder: overrideEncoder)
 
         guard case let .data(data) = builder.requestSpec.body else {
             Issue.record("body data not found")
@@ -52,7 +52,7 @@ struct NXRequestBodyExecutionAPITests {
         let client = makeClient()
         let payload = Data("hello".utf8)
 
-        let builder = client
+        let builder: NXRequestBuilder<UserDTO> = client
             .post("/users")
             .body(payload, contentType: "text/plain")
 
@@ -77,12 +77,12 @@ struct NXRequestBodyExecutionAPITests {
                 )
             }
         )
-        let builder = client.get("/users")
+        let builder: NXRequestBuilder<UserDTO> = client.get("/users")
 
         let rawResponse = try await builder.raw()
         #expect(rawResponse.response.statusCode == 200)
 
-        let user = try await builder.send(as: UserDTO.self)
+        let user = try await builder.send()
         #expect(user == UserDTO(id: 1, name: "opfic"))
 
         try await builder.sendVoid()
