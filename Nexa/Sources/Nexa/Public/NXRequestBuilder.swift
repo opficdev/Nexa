@@ -67,6 +67,10 @@ public struct NXRequestBuilder: Sendable {
         }
     }
 
+    public func preparedURLRequest() async throws -> URLRequest {
+        try NXRequestAssembler.assemble(clientConfiguration: clientConfiguration, requestSpec: requestSpec)
+    }
+
     public func raw() async throws -> NXRawResponse {
         throw NXError.invalidRequest("Request execution API is configured before request build logic.")
     }
