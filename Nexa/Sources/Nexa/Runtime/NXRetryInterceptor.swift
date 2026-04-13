@@ -16,9 +16,7 @@ struct NXRetryInterceptor: NXHTTPInterceptor {
             return try await next(context)
         }
 
-        var attemptNumber = 1
-
-        while attemptNumber <= retryPolicy.maxAttempts {
+        for attemptNumber in 1..<retryPolicy.maxAttempts {
             let attemptContext = context.withAttemptNumber(attemptNumber)
 
             do {
@@ -41,7 +39,6 @@ struct NXRetryInterceptor: NXHTTPInterceptor {
                         )
                     )
                     try await sleep(delay: delay)
-                    attemptNumber += 1
                     continue
                 }
 
@@ -60,7 +57,6 @@ struct NXRetryInterceptor: NXHTTPInterceptor {
                         )
                     )
                     try await sleep(delay: delay)
-                    attemptNumber += 1
                     continue
                 }
 
@@ -68,7 +64,7 @@ struct NXRetryInterceptor: NXHTTPInterceptor {
             }
         }
 
-        return try await next(context)
+        return try await next(context.withAttemptNumber(retryPolicy.maxAttempts))
     }
 
     private func isRetryable(error: any Error) -> Bool {
