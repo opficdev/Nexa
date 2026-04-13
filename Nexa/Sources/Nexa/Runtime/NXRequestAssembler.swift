@@ -13,9 +13,10 @@ enum NXRequestAssembler {
         var request = URLRequest(url: assembledURL)
         request.httpMethod = requestSpec.method.rawValue
 
-        mergedHeaders(clientConfiguration: clientConfiguration, requestSpec: requestSpec).forEach { key, value in
-            request.setValue(value, forHTTPHeaderField: key)
-        }
+        request.allHTTPHeaderFields = mergedHeaders(
+            clientConfiguration: clientConfiguration,
+            requestSpec: requestSpec
+        )
 
         if let requestBody = requestSpec.body {
             request.httpBody = requestBody.data
@@ -63,11 +64,7 @@ enum NXRequestAssembler {
     }
 
     private static func mergedHeaders(clientConfiguration: NXClientConfiguration, requestSpec: RequestSpec) -> [String: String] {
-        var headerValues = clientConfiguration.headers
-        requestSpec.headers.forEach { key, value in
-            headerValues[key] = value
-        }
-        return headerValues
+        clientConfiguration.headers.merging(requestSpec.headers) { $1 }
     }
 
     private static func mergedQueryItems(existing: [URLQueryItem], adding: [URLQueryItem]) -> [URLQueryItem]? {
