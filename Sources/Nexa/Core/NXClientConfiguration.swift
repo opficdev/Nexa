@@ -32,7 +32,7 @@ import Foundation
 public struct NXClientConfiguration: Sendable {
     /// Base URL used to resolve relative request paths.
     public let baseURL: URL
-    /// Headers added to every request before request-level headers are merged.
+    /// Headers applied to every request. Request-level headers override these when keys conflict.
     public let headers: [String: String]
     /// Transport used to execute the assembled `URLRequest`.
     public let transport: any NXHTTPTransport
