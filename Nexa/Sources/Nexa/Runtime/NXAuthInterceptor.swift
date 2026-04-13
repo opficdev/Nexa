@@ -20,7 +20,7 @@ struct NXAuthInterceptor: NXHTTPInterceptor {
             throw NXError.authProviderUnavailable
         }
 
-        let accessToken = try await resolveAccessToken(authTokenProvider: authTokenProvider)
+        let accessToken = try await currentAccessToken(authTokenProvider: authTokenProvider)
         let firstContext = context.replacingRequest(withBearerToken: accessToken)
         let firstResponse = try await next(firstContext)
 
@@ -52,13 +52,9 @@ struct NXAuthInterceptor: NXHTTPInterceptor {
         return try await next(context.replacingRequest(withBearerToken: refreshedAccessToken))
     }
 
-    private func resolveAccessToken(authTokenProvider: any NXAuthTokenProvider) async throws -> String {
+    private func currentAccessToken(authTokenProvider: any NXAuthTokenProvider) async throws -> String {
         if let accessToken = try await authTokenProvider.currentAccessToken() {
             return accessToken
-        }
-
-        if let refreshedAccessToken = try await authTokenProvider.refreshAccessToken() {
-            return refreshedAccessToken
         }
 
         throw NXError.authenticationRequired
