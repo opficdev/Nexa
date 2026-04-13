@@ -8,9 +8,9 @@
 import Foundation
 
 enum RequestAssembler {
-    static func compile(clientConfiguration: NXClientConfiguration, requestSpec: RequestSpec) throws -> URLRequest {
-        let compiledURL = try compileURL(baseURL: clientConfiguration.baseURL, requestSpec: requestSpec)
-        var request = URLRequest(url: compiledURL)
+    static func assemble(clientConfiguration: NXClientConfiguration, requestSpec: RequestSpec) throws -> URLRequest {
+        let assembledURL = try assembleURL(baseURL: clientConfiguration.baseURL, requestSpec: requestSpec)
+        var request = URLRequest(url: assembledURL)
         request.httpMethod = requestSpec.method.rawValue
 
         mergedHeaders(clientConfiguration: clientConfiguration, requestSpec: requestSpec).forEach { key, value in
@@ -28,7 +28,7 @@ enum RequestAssembler {
         return request
     }
 
-    static func compileURL(baseURL: URL, requestSpec: RequestSpec) throws -> URL {
+    static func assembleURL(baseURL: URL, requestSpec: RequestSpec) throws -> URL {
         if let absoluteURL = URL(string: requestSpec.path), absoluteURL.scheme != nil {
             return appendQueryItems(url: absoluteURL, queryItems: requestSpec.queryItems)
         }
