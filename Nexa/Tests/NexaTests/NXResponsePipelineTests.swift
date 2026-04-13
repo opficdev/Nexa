@@ -30,22 +30,20 @@ struct NXResponsePipelineTests {
         let requestSpec = RequestSpec(method: .get, path: "/users")
         let rawResponse = makeRawResponse(statusCode: 400, body: "{\"message\":\"bad request\"}")
 
-        do {
+        #expect {
             try NXResponsePipeline.validate(
                 clientConfiguration: configuration,
                 requestSpec: requestSpec,
                 rawResponse: rawResponse
             )
-            Issue.record("Expected server error")
-        } catch let error as NXError {
-            guard case let .server(statusCode, _, underlying) = error else {
-                Issue.record("Unexpected NXError: \(error)")
-                return
+        } throws: { error in
+            guard let nxError = error as? NXError,
+                  case let .server(statusCode, _, underlying) = nxError else {
+                return false
             }
-            #expect(statusCode == 400)
-            #expect((underlying as? MockAPIError)?.message == "bad request")
-        } catch {
-            Issue.record("Unexpected error: \(error)")
+
+            return statusCode == 400 &&
+                (underlying as? MockAPIError)?.message == "bad request"
         }
     }
 
@@ -69,20 +67,17 @@ struct NXResponsePipelineTests {
         let configuration = makeConfiguration()
         let rawResponse = makeRawResponse(statusCode: 200, body: "{\"unexpected\":true}")
 
-        do {
+        #expect {
             _ = try NXResponsePipeline.decode(
                 clientConfiguration: configuration,
                 rawResponse: rawResponse,
                 responseType: PipelineUser.self
             )
-            Issue.record("Expected decoding error")
-        } catch let error as NXError {
-            guard case .decoding = error else {
-                Issue.record("Unexpected NXError: \(error)")
-                return
+        } throws: { error in
+            guard let nxError = error as? NXError, case .decoding = nxError else {
+                return false
             }
-        } catch {
-            Issue.record("Unexpected error: \(error)")
+            return true
         }
     }
 
