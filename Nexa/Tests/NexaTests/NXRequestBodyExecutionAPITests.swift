@@ -65,46 +65,40 @@ struct NXRequestBodyExecutionAPITests {
         #expect(builder.requestSpec.headers["Content-Type"] == "text/plain")
     }
 
-    @Test("실행 API는 빌드 로직 전 단계에서 invalidRequest 에러를 던진다")
-    func executionAPIsThrowInvalidRequestBeforeBuildLogic() async {
-        let client = makeClient()
+    @Test("실행 API는 transport 응답을 사용한다")
+    func executionAPIsUseTransportResponses() async throws {
+        let client = makeClient(
+            transport: ClosureTransport { request in
+                #expect(request.url?.absoluteString == "https://example.com/users")
+                return makeRawResponse(
+                    statusCode: 200,
+                    body: #"{"id":1,"name":"opfic"}"#,
+                    path: "/users"
+                )
+            }
+        )
         let builder = client.get("/users")
 
-        await expectInvalidRequest {
-            _ = try await builder.raw()
-        }
+        let rawResponse = try await builder.raw()
+        #expect(rawResponse.response.statusCode == 200)
 
-        await expectInvalidRequest {
-            let _: UserPayload = try await builder.send(as: UserPayload.self)
-        }
+        let user = try await builder.send(as: UserDTO.self)
+        #expect(user == UserDTO(id: 1, name: "opfic"))
 
-        await expectInvalidRequest {
-            try await builder.sendVoid()
-        }
+        try await builder.sendVoid()
     }
 
-    private func makeClient(encoder: JSONEncoder = JSONEncoder()) -> NXAPIClient {
+    private func makeClient(
+        encoder: JSONEncoder = JSONEncoder(),
+        transport: any NXHTTPTransport = NXURLSessionTransport()
+    ) -> NXAPIClient {
         NXAPIClient(
             configuration: NXClientConfiguration(
                 baseURL: URL(string: "https://example.com")!,
+                transport: transport,
                 encoder: encoder
             )
         )
-    }
-
-    private func expectInvalidRequest(_ operation: () async throws -> Void) async {
-        do {
-            try await operation()
-            Issue.record("Expected NXError.invalidRequest")
-        } catch let error as NXError {
-            guard case let .invalidRequest(message) = error else {
-                Issue.record("Unexpected NXError: \(error)")
-                return
-            }
-            #expect(message.contains("Request execution API"))
-        } catch {
-            Issue.record("Unexpected error: \(error)")
-        }
     }
 }
 
