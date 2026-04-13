@@ -57,6 +57,16 @@ struct NXRequestBuildLogicTests {
         #expect(request.url?.absoluteString == "https://example.com/api/users/me")
     }
 
+    @Test("요청 path의 후행 슬래시는 유지한다")
+    func preservesTrailingSlashInRequestPath() async throws {
+        let client = makeClient(baseURL: URL(string: "https://example.com/api")!)
+        let builder = client.get("users/")
+
+        let request = try await builder.preparedURLRequest()
+
+        #expect(request.url?.absoluteString == "https://example.com/api/users/")
+    }
+
     private func makeClient(baseURL: URL) -> NXAPIClient {
         NXAPIClient(
             configuration: NXClientConfiguration(
