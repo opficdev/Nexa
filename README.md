@@ -145,6 +145,62 @@ Use the lower-level protocols only when the default behavior is not enough:
 - `NXServerErrorDecoder`: server payload to domain error mapping
 - `NXLogger`: request lifecycle logging and observability
 
+## Request Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant App
+    participant Config as NXClientConfiguration
+    participant Client as NXAPIClient
+    participant Builder as Builder
+    participant Assembler as NXRequestAssembler
+    participant Chain as NXInterceptorChain
+    participant Transport as NXHTTPTransport
+    participant Pipeline as NXResponsePipeline
+
+    App->>Config: 공통 설정 구성
+    App->>Client: NXAPIClient(configuration)
+
+    alt method 기반 호출
+        App->>Client: get/post/put/patch/delete
+        Client->>Builder: NXRequestBuilder or NXTypedRequestBuilder
+    else endpoint 기반 호출
+        App->>Client: request(endpoint) / send(endpoint)
+        Client->>Builder: endpoint.configure(builder)
+    end
+
+    App->>Builder: query/header/authorized/retry/validate/intercept...
+
+    alt preparedURLRequest()
+        Builder->>Assembler: assemble()
+        Assembler-->>Builder: URLRequest
+        Builder-->>App: URLRequest
+    else raw()
+        Builder->>Assembler: assemble()
+        Assembler-->>Builder: URLRequest
+        Builder->>Chain: execute(context)
+        Chain->>Transport: send(request)
+        Transport-->>Chain: NXRawResponse
+        Chain-->>Builder: NXRawResponse
+        Builder->>Pipeline: validate()
+        Pipeline-->>Builder: validated
+        Builder-->>App: NXRawResponse
+    else send()
+        Builder->>Assembler: assemble()
+        Assembler-->>Builder: URLRequest
+        Builder->>Chain: execute(context)
+        Chain->>Transport: send(request)
+        Transport-->>Chain: NXRawResponse
+        Chain-->>Builder: NXRawResponse
+        Builder->>Pipeline: validate()
+        Pipeline-->>Builder: validated
+        Builder->>Pipeline: decode()
+        Pipeline-->>Builder: Response
+        Builder-->>App: Response
+    end
+```
+
 ## Quick Start
 
 Nexa keeps request code compact while still exposing auth, retry, validation, and decoding in one flow.
