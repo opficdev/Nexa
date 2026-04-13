@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct NXURLSessionTransport: NXHTTPTransport, @unchecked Sendable {
+public struct NXURLSessionTransport: NXHTTPTransport, Sendable {
     let urlSession: URLSession
 
     public init(urlSession: URLSession = .shared) {
