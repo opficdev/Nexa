@@ -13,6 +13,7 @@ public struct NXClientConfiguration: Sendable {
     public var transport: any NXHTTPTransport
     public var decoder: JSONDecoder
     public var encoder: JSONEncoder
+    public var serverErrorDecoder: any NXServerErrorDecoder
     public var authTokenProvider: (any NXAuthTokenProvider)?
 
     public init(
@@ -21,6 +22,7 @@ public struct NXClientConfiguration: Sendable {
         transport: any NXHTTPTransport = NXURLSessionTransport(),
         decoder: JSONDecoder = JSONDecoder(),
         encoder: JSONEncoder = JSONEncoder(),
+        serverErrorDecoder: any NXServerErrorDecoder = NXDefaultServerErrorDecoder(),
         authTokenProvider: (any NXAuthTokenProvider)? = nil
     ) {
         self.baseURL = baseURL
@@ -28,6 +30,7 @@ public struct NXClientConfiguration: Sendable {
         self.transport = transport
         self.decoder = decoder
         self.encoder = encoder
+        self.serverErrorDecoder = serverErrorDecoder
         self.authTokenProvider = authTokenProvider
     }
 }
