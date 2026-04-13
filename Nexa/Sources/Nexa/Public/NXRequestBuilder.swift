@@ -67,6 +67,19 @@ public struct NXRequestBuilder: Sendable {
         }
     }
 
+    public func raw() async throws -> NXRawResponse {
+        throw NXError.invalidRequest("Request execution API is configured before request build logic.")
+    }
+
+    public func send<T: Decodable>(as type: T.Type) async throws -> T {
+        _ = type
+        throw NXError.invalidRequest("Request execution API is configured before request build logic.")
+    }
+
+    public func sendVoid() async throws {
+        throw NXError.invalidRequest("Request execution API is configured before request build logic.")
+    }
+
     func modifying(_ update: (inout RequestSpec) throws -> Void) rethrows -> Self {
         var copiedRequestSpec = requestSpec
         try update(&copiedRequestSpec)
