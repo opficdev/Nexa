@@ -1,13 +1,13 @@
 //
-//  NXRequestBuilder.swift
+//  NXTypedRequestBuilder.swift
 //  Nexa
 //
-//  Created by 최윤진 on 4/13/26.
+//  Created by 최윤진 on 4/12/26.
 //
 
 import Foundation
 
-public struct NXRequestBuilder: Sendable {
+public struct NXTypedRequestBuilder<Response>: Sendable where Response: Decodable {
     let clientConfiguration: NXClientConfiguration
     let requestSpec: RequestSpec
 
@@ -93,12 +93,21 @@ public struct NXRequestBuilder: Sendable {
         try await NXRequestExecutor.executeRaw(clientConfiguration: clientConfiguration, requestSpec: requestSpec)
     }
 
-    public func sendVoid() async throws {
-        _ = try await raw()
+    public func send() async throws -> Response {
+        try await NXRequestExecutor.executeDecode(
+            clientConfiguration: clientConfiguration,
+            requestSpec: requestSpec,
+            responseType: Response.self
+        )
     }
 
-    public func `as`<Response: Decodable>(_ type: Response.Type) -> NXTypedRequestBuilder<Response> {
-        NXTypedRequestBuilder(clientConfiguration: clientConfiguration, requestSpec: requestSpec)
+    @available(*, deprecated, message: "send()를 사용하세요.")
+    public func send(as type: Response.Type) async throws -> Response {
+        try await send()
+    }
+
+    public func sendVoid() async throws {
+        _ = try await raw()
     }
 
     func modifying(_ update: (inout RequestSpec) throws -> Void) rethrows -> Self {

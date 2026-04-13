@@ -11,11 +11,11 @@ public protocol NXEndpoint {
     associatedtype Response: Decodable
     var method: NXHTTPMethod { get }
     var path: String { get }
-    func configure(_ builder: NXRequestBuilder<Response>) -> NXRequestBuilder<Response>
+    func configure(_ builder: NXTypedRequestBuilder<Response>) -> NXTypedRequestBuilder<Response>
 }
 
 public extension NXEndpoint {
-    func configure(_ builder: NXRequestBuilder<Response>) -> NXRequestBuilder<Response> {
+    func configure(_ builder: NXTypedRequestBuilder<Response>) -> NXTypedRequestBuilder<Response> {
         builder
     }
 }
