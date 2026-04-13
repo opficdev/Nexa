@@ -161,6 +161,7 @@ public struct NXTypedRequestBuilder<Response>: Sendable where Response: Decodabl
     /// Sends the request and decodes the response into `Response`.
     ///
     /// - Returns: Decoded response value.
+    /// - Throws: `NXError` if the request fails or decoding fails.
     public func send() async throws -> Response {
         try await NXRequestExecutor.executeDecode(
             clientConfiguration: clientConfiguration,
