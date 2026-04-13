@@ -39,7 +39,6 @@ jobs:
         run: swift --version
 
       - name: Test
-        working-directory: Nexa
         shell: bash
         run: |
           set -euo pipefail
@@ -55,7 +54,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-log
-          path: Nexa/test.log
+          path: test.log
           if-no-files-found: ignore
 
   notify_pr_failure:
