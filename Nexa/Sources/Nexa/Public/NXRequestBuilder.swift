@@ -60,10 +60,15 @@ public struct NXRequestBuilder: Sendable {
         }
     }
 
-    public func body(_ data: Data, contentType: String) -> Self {
+    public func body(_ data: Data) -> Self {
         modifying { requestSpec in
             requestSpec.body = .data(data)
-            requestSpec.headers["Content-Type"] = contentType
+        }
+    }
+
+    public func contentType(_ value: String) -> Self {
+        modifying { requestSpec in
+            requestSpec.headers["Content-Type"] = value
         }
     }
 

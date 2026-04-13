@@ -49,18 +49,15 @@ enum NXRequestAssembler {
     }
 
     private static func mergedPath(basePath: String, requestPath: String) -> String {
-        let trimmedBasePath = basePath.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-        let trimmedRequestPath = requestPath.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let normalizedBasePath = basePath.isEmpty ? "/" : (basePath.hasPrefix("/") ? basePath : "/\(basePath)")
 
-        if trimmedBasePath.isEmpty {
-            return "/\(trimmedRequestPath)"
+        guard !requestPath.isEmpty else {
+            return normalizedBasePath
         }
 
-        if trimmedRequestPath.isEmpty {
-            return "/\(trimmedBasePath)"
-        }
-
-        return "/\(trimmedBasePath)/\(trimmedRequestPath)"
+        let normalizedRequestPath = requestPath.hasPrefix("/") ? String(requestPath.dropFirst()) : requestPath
+        let separator = normalizedBasePath.hasSuffix("/") ? "" : "/"
+        return "\(normalizedBasePath)\(separator)\(normalizedRequestPath)"
     }
 
     private static func mergedHeaders(clientConfiguration: NXClientConfiguration, requestSpec: RequestSpec) -> [String: String] {

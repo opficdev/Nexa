@@ -20,7 +20,8 @@ struct NXRequestBuildLogicTests {
             .query("page", 1)
             .header("X-Trace", "abc")
             .timeout(5)
-            .body(Data("hello".utf8), contentType: "text/plain")
+            .body(Data("hello".utf8))
+            .contentType("text/plain")
             .preparedURLRequest()
 
         #expect(request.httpMethod == "POST")
@@ -55,6 +56,26 @@ struct NXRequestBuildLogicTests {
             .preparedURLRequest()
 
         #expect(request.url?.absoluteString == "https://example.com/api/users/me")
+    }
+
+    @Test("요청 path의 후행 슬래시는 유지한다")
+    func preservesTrailingSlashInRequestPath() async throws {
+        let client = makeClient(baseURL: URL(string: "https://example.com/api")!)
+        let builder = client.get("users/")
+
+        let request = try await builder.preparedURLRequest()
+
+        #expect(request.url?.absoluteString == "https://example.com/api/users/")
+    }
+
+    @Test("요청 path가 루트 슬래시만 전달되어도 후행 슬래시는 유지한다")
+    func preservesTrailingSlashWhenRequestPathIsRootSlash() async throws {
+        let client = makeClient(baseURL: URL(string: "https://example.com/api")!)
+        let builder = client.get("/")
+
+        let request = try await builder.preparedURLRequest()
+
+        #expect(request.url?.absoluteString == "https://example.com/api/")
     }
 
     private func makeClient(baseURL: URL) -> NXAPIClient {
