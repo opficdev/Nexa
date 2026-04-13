@@ -20,13 +20,12 @@ struct NXCoreModelPolicyTests {
         #expect(NXHTTPMethod.delete.rawValue == "DELETE")
     }
 
-    @Test("요청 바디가 data와 contentType을 유지한다")
-    func requestBodyStoresDataAndContentType() {
+    @Test("요청 바디가 data를 유지한다")
+    func requestBodyStoresData() {
         let payload = Data("hello".utf8)
-        let body = NXRequestBody.data(payload, contentType: "text/plain")
+        let body = NXRequestBody.data(payload)
 
         #expect(body.data == payload)
-        #expect(body.contentType == "text/plain")
     }
 
     @Test("원시 응답 모델이 데이터와 상태코드를 보존한다")

@@ -8,19 +8,12 @@
 import Foundation
 
 public enum NXRequestBody: Sendable {
-    case data(Data, contentType: String)
+    case data(Data)
 
     var data: Data {
         switch self {
-        case let .data(dataValue, _):
+        case let .data(dataValue):
             dataValue
-        }
-    }
-
-    var contentType: String {
-        switch self {
-        case let .data(_, contentTypeValue):
-            contentTypeValue
         }
     }
 }
