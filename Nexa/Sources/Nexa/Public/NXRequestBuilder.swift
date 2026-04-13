@@ -68,7 +68,7 @@ public struct NXRequestBuilder: Sendable {
     }
 
     public func preparedURLRequest() async throws -> URLRequest {
-        try RequestAssembler.assemble(clientConfiguration: clientConfiguration, requestSpec: requestSpec)
+        try NXRequestAssembler.assemble(clientConfiguration: clientConfiguration, requestSpec: requestSpec)
     }
 
     public func raw() async throws -> NXRawResponse {

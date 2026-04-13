@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum RequestAssembler {
+enum NXRequestAssembler {
     static func assemble(clientConfiguration: NXClientConfiguration, requestSpec: RequestSpec) throws -> URLRequest {
         let assembledURL = try assembleURL(baseURL: clientConfiguration.baseURL, requestSpec: requestSpec)
         var request = URLRequest(url: assembledURL)
