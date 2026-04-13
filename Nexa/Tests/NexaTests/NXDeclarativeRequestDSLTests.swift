@@ -15,15 +15,15 @@ struct NXDeclarativeRequestDSLTests {
     func apiClientVerbEntryPoints() {
         let client = makeClient()
 
-        let getBuilder: NXRequestBuilder<[String]> = client.get("/users")
+        let getBuilder = client.get("/users")
         #expect(getBuilder.requestSpec.method == .get)
         #expect(getBuilder.requestSpec.path == "/users")
 
-        let postBuilder: NXRequestBuilder<[String]> = client.post("/users")
+        let postBuilder = client.post("/users")
         #expect(postBuilder.requestSpec.method == .post)
         #expect(postBuilder.requestSpec.path == "/users")
 
-        let deleteBuilder: NXRequestBuilder<[String]> = client.delete("/users/1")
+        let deleteBuilder = client.delete("/users/1")
         #expect(deleteBuilder.requestSpec.method == .delete)
         #expect(deleteBuilder.requestSpec.path == "/users/1")
     }
@@ -44,7 +44,7 @@ struct NXDeclarativeRequestDSLTests {
     func requestBuilderValueSemantics() {
         let client = makeClient()
 
-        let originalBuilder: NXRequestBuilder<[String]> = client.get("/users")
+        let originalBuilder = client.get("/users")
         let modifiedBuilder = originalBuilder
             .query("page", 1)
             .header("X-Trace", "abc")
@@ -66,7 +66,7 @@ struct NXDeclarativeRequestDSLTests {
     func headerModifiers() {
         let client = makeClient()
 
-        let builder: NXRequestBuilder<[String]> = client.get("/users")
+        let builder = client.get("/users")
             .headers(["A": "1", "B": "2"])
             .accept("application/json")
 
@@ -90,7 +90,7 @@ private struct UsersEndpoint: NXEndpoint {
     var method: NXHTTPMethod { .get }
     var path: String { "/users" }
 
-    func configure(_ builder: NXRequestBuilder<Response>) -> NXRequestBuilder<Response> {
+    func configure(_ builder: NXTypedRequestBuilder<Response>) -> NXTypedRequestBuilder<Response> {
         builder.query("page", 1)
     }
 }

@@ -21,7 +21,7 @@ struct UserEndpoint: NXEndpoint {
     var method: NXHTTPMethod { .get }
     var path: String { "/users/\(identifier)" }
 
-    func configure(_ builder: NXRequestBuilder<Response>) -> NXRequestBuilder<Response> {
+    func configure(_ builder: NXTypedRequestBuilder<Response>) -> NXTypedRequestBuilder<Response> {
         builder.query("include", "profile")
     }
 }
