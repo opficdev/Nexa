@@ -60,7 +60,9 @@ Then add `Nexa` to your target dependencies:
 
 ## Public API
 
-Most code starts from `NXAPIClient`, then moves into either `NXRequestBuilder` or `NXTypedRequestBuilder<Response>`. The rest of the public surface is made of extension points for auth, logging, testing, retry, validation, and custom error mapping.
+Most code starts from `NXAPIClient`, then moves into either `NXRequestBuilder` or `NXTypedRequestBuilder<Response>`. 
+
+The rest of the public surface is made of extension points for auth, logging, testing, retry, validation, and custom error mapping.
 
 | API | When to use it | Example |
 | --- | --- | --- |
