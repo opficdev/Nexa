@@ -174,22 +174,30 @@ sequenceDiagram
 
     alt preparedURLRequest()
         Builder->>Assembler: assemble()
-        Assembler-->>App: URLRequest
+        Assembler-->>Builder: URLRequest
+        Builder-->>App: URLRequest
     else raw()
         Builder->>Assembler: assemble()
-        Assembler->>Chain: execute(context)
+        Assembler-->>Builder: URLRequest
+        Builder->>Chain: execute(context)
         Chain->>Transport: send(request)
-        Transport-->>Pipeline: NXRawResponse
-        Pipeline->>Pipeline: validate()
-        Pipeline-->>App: NXRawResponse
+        Transport-->>Chain: NXRawResponse
+        Chain-->>Builder: NXRawResponse
+        Builder->>Pipeline: validate()
+        Pipeline-->>Builder: NXRawResponse
+        Builder-->>App: NXRawResponse
     else send()
         Builder->>Assembler: assemble()
-        Assembler->>Chain: execute(context)
+        Assembler-->>Builder: URLRequest
+        Builder->>Chain: execute(context)
         Chain->>Transport: send(request)
-        Transport-->>Pipeline: NXRawResponse
-        Pipeline->>Pipeline: validate()
-        Pipeline->>Pipeline: decode()
-        Pipeline-->>App: Response
+        Transport-->>Chain: NXRawResponse
+        Chain-->>Builder: NXRawResponse
+        Builder->>Pipeline: validate()
+        Pipeline-->>Builder: validated
+        Builder->>Pipeline: decode()
+        Pipeline-->>Builder: Response
+        Builder-->>App: Response
     end
 ```
 
