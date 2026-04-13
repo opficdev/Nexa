@@ -14,9 +14,9 @@ struct NXRequestBuildLogicTests {
     @Test("상대 경로 요청을 URLRequest로 조립한다")
     func assemblesRelativePathRequest() async throws {
         let client = makeClient(baseURL: URL(string: "https://example.com/api")!)
+        let builder = client.post("/users")
 
-        let request = try await client
-            .post("/users")
+        let request = try await builder
             .query("page", 1)
             .header("X-Trace", "abc")
             .timeout(5)
@@ -35,9 +35,9 @@ struct NXRequestBuildLogicTests {
     @Test("절대 경로 요청은 baseURL 대신 절대 경로를 사용한다")
     func assemblesAbsolutePathRequest() async throws {
         let client = makeClient(baseURL: URL(string: "https://example.com/api")!)
+        let builder = client.get("https://other.example.com/v1/me")
 
-        let request = try await client
-            .get("https://other.example.com/v1/me")
+        let request = try await builder
             .query("include", "profile")
             .preparedURLRequest()
 
@@ -49,9 +49,9 @@ struct NXRequestBuildLogicTests {
     @Test("baseURL path와 요청 path를 슬래시 규칙에 맞게 병합한다")
     func mergesBaseAndRequestPath() async throws {
         let client = makeClient(baseURL: URL(string: "https://example.com/api/")!)
+        let builder = client.get("users/me")
 
-        let request = try await client
-            .get("users/me")
+        let request = try await builder
             .preparedURLRequest()
 
         #expect(request.url?.absoluteString == "https://example.com/api/users/me")

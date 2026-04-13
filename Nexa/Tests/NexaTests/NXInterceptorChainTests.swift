@@ -35,7 +35,8 @@ struct NXInterceptorChainTests {
         let user = try await client
             .get("/users/me")
             .authorized()
-            .send(as: UserDTO.self)
+            .as(UserDTO.self)
+            .send()
 
         #expect(user == UserDTO(id: 1, name: "opfic"))
         #expect(await attemptCounter.value() == 2)
@@ -54,7 +55,7 @@ struct NXInterceptorChainTests {
         )
 
         await #expect {
-            _ = try await client.get("/users").send(as: UserDTO.self)
+            let _: UserDTO = try await client.get("/users", as: UserDTO.self).send()
         } throws: { error in
             guard case NXError.timeout = error else {
                 return false
@@ -83,9 +84,9 @@ struct NXInterceptorChainTests {
         )
 
         let user = try await client
-            .get("/users")
+            .get("/users", as: UserDTO.self)
             .retry(NXRetryPolicy(maxAttempts: 3))
-            .send(as: UserDTO.self)
+            .send()
 
         #expect(user == UserDTO(id: 3, name: "retry"))
         #expect(await attemptCounter.value() == 3)
@@ -106,7 +107,8 @@ struct NXInterceptorChainTests {
         let user = try await client
             .get("/users")
             .intercept(HeaderInterceptor(name: "X-Request-Interceptor", value: "request"))
-            .send(as: UserDTO.self)
+            .as(UserDTO.self)
+            .send()
 
         #expect(user == UserDTO(id: 7, name: "chain"))
     }
@@ -124,11 +126,12 @@ struct NXInterceptorChainTests {
             authTokenProvider: tokenProvider
         )
 
-        _ = try await client
+        let _: UserDTO = try await client
             .get("/users/me")
             .authorized()
             .header("Cookie", "session=abc")
-            .send(as: UserDTO.self)
+            .as(UserDTO.self)
+            .send()
 
         let startLogs = await logger.startLogs()
         #expect(startLogs.count == 1)

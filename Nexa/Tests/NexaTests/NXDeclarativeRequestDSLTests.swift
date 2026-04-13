@@ -90,7 +90,7 @@ private struct UsersEndpoint: NXEndpoint {
     var method: NXHTTPMethod { .get }
     var path: String { "/users" }
 
-    func configure(_ builder: NXRequestBuilder) -> NXRequestBuilder {
+    func configure(_ builder: NXTypedRequestBuilder<Response>) -> NXTypedRequestBuilder<Response> {
         builder.query("page", 1)
     }
 }
