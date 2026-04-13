@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Semantic version without prefix (example: 1.0.0)
+        description: "Semantic version without prefix (example: 1.0.0)"
         required: true
         type: string
       release_notes:
-        description: Optional release notes
+        description: "Optional release notes"
         required: false
         type: string
 
