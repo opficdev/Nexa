@@ -25,7 +25,23 @@ jobs:
 
       - name: Build
         working-directory: Nexa
-        run: swift build
+        shell: bash
+        run: |
+          set -euo pipefail
+          set -o pipefail
+          set +e
+          swift build 2>&1 | tee build.log
+          buildStatus=${PIPESTATUS[0]}
+          set -e
+          exit $buildStatus
+
+      - name: Upload build log artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: Nexa/build.log
+          if-no-files-found: ignore
 
   test:
     name: Swift Test
@@ -44,17 +60,25 @@ jobs:
     if: ${{ always() && needs.build.result == 'failure' }}
     runs-on: ubuntu-latest
     steps:
+      - name: Download build log artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: build-log
+          path: artifacts
+        continue-on-error: true
+
       - name: Comment on Failed PR
         uses: actions/github-script@v7
         with:
           script: |
+            const fs = require('fs');
             const pullRequest = context.payload.pull_request;
             if (!pullRequest) {
               core.info('No PR context; skipping comment.');
               return;
             }
             const runUrl = `${process.env.GITHUB_SERVER_URL}/${context.repo.owner}/${context.repo.repo}/actions/runs/${process.env.GITHUB_RUN_ID}`;
-            const body = [
+            let body = [
               `@${context.actor} build CI가 실패했습니다.`,
               '',
               `- Workflow: ${context.workflow}`,
@@ -62,6 +86,23 @@ jobs:
               `- Commit: ${pullRequest.head.sha}`,
               `- Run: ${runUrl}`,
             ].join('\n');
+
+            const logPath = 'artifacts/build.log';
+            if (fs.existsSync(logPath)) {
+              const log = fs.readFileSync(logPath, 'utf8');
+              const lines = log.split(/\r?\n/);
+              const errorLines = lines.filter((line) =>
+                /error:/i.test(line) || /fatal error:/i.test(line)
+              );
+              const trimmedLines = errorLines.slice(0, 30);
+              if (0 < trimmedLines.length) {
+                body += '\n\n### 오류 요약\n```\n' + trimmedLines.join('\n') + '\n```';
+              } else {
+                body += '\n\n### 오류 요약\n로그에서 에러 라인을 찾지 못했습니다.';
+              }
+            } else {
+              body += '\n\n### 오류 요약\nbuild.log를 찾지 못했습니다.';
+            }
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
