@@ -168,15 +168,4 @@ public struct NXTypedRequestBuilder<Response>: Sendable where Response: Decodabl
             responseType: Response.self
         )
     }
-
-    @available(*, deprecated, message: "send()를 사용하세요.")
-    /// Sends the request and decodes the response into `Response`.
-    ///
-    /// This method is deprecated. Use `send()` instead.
-    ///
-    /// - Parameter type: Response type to decode.
-    /// - Returns: Decoded response value.
-    public func send(as type: Response.Type) async throws -> Response {
-        try await send()
-    }
 }
