@@ -98,7 +98,7 @@ public struct NXRequestBuilder: Sendable {
     }
 
     public func `as`<Response: Decodable>(_ type: Response.Type) -> NXTypedRequestBuilder<Response> {
-        NXTypedRequestBuilder(clientConfiguration: clientConfiguration, requestSpec: requestSpec)
+        NXTypedRequestBuilder(requestBuilder: self)
     }
 
     func modifying(_ update: (inout RequestSpec) throws -> Void) rethrows -> Self {

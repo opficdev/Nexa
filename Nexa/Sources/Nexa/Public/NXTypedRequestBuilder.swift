@@ -8,89 +8,70 @@
 import Foundation
 
 public struct NXTypedRequestBuilder<Response>: Sendable where Response: Decodable {
-    let clientConfiguration: NXClientConfiguration
-    let requestSpec: RequestSpec
+    let requestBuilder: NXRequestBuilder
 
-    init(clientConfiguration: NXClientConfiguration, requestSpec: RequestSpec) {
-        self.clientConfiguration = clientConfiguration
-        self.requestSpec = requestSpec
+    init(requestBuilder: NXRequestBuilder) {
+        self.requestBuilder = requestBuilder
+    }
+
+    var clientConfiguration: NXClientConfiguration {
+        requestBuilder.clientConfiguration
+    }
+
+    var requestSpec: RequestSpec {
+        requestBuilder.requestSpec
     }
 
     public func query(_ key: String, _ value: some CustomStringConvertible) -> Self {
-        modifying { requestSpec in
-            requestSpec.queryItems.append(URLQueryItem(name: key, value: String(describing: value)))
-        }
+        Self(requestBuilder: requestBuilder.query(key, value))
     }
 
     public func header(_ key: String, _ value: String) -> Self {
-        modifying { requestSpec in
-            requestSpec.headers[key] = value
-        }
+        Self(requestBuilder: requestBuilder.header(key, value))
     }
 
     public func headers(_ values: [String: String]) -> Self {
-        modifying { requestSpec in
-            requestSpec.headers.merge(values) { _, newValue in newValue }
-        }
+        Self(requestBuilder: requestBuilder.headers(values))
     }
 
     public func accept(_ value: String) -> Self {
-        header("Accept", value)
+        Self(requestBuilder: requestBuilder.accept(value))
     }
 
     public func authorized() -> Self {
-        modifying { requestSpec in
-            requestSpec.authRequirement = .required
-        }
+        Self(requestBuilder: requestBuilder.authorized())
     }
 
     public func timeout(_ seconds: TimeInterval) -> Self {
-        modifying { requestSpec in
-            requestSpec.timeout = max(0, seconds)
-        }
+        Self(requestBuilder: requestBuilder.timeout(seconds))
     }
 
     public func json<T: Encodable>(_ value: T, encoder: JSONEncoder? = nil) throws -> Self {
-        let selectedEncoder = encoder ?? clientConfiguration.encoder
-        let encodedValue = try selectedEncoder.encode(value)
-
-        return modifying { requestSpec in
-            requestSpec.body = .data(encodedValue)
-            requestSpec.headers["Content-Type"] = "application/json; charset=utf-8"
-        }
+        try Self(requestBuilder: requestBuilder.json(value, encoder: encoder))
     }
 
     public func body(_ data: Data, contentType: String) -> Self {
-        modifying { requestSpec in
-            requestSpec.body = .data(data)
-            requestSpec.headers["Content-Type"] = contentType
-        }
+        Self(requestBuilder: requestBuilder.body(data, contentType: contentType))
     }
 
     public func retry(_ policy: NXRetryPolicy) -> Self {
-        modifying { requestSpec in
-            requestSpec.retryPolicy = policy
-        }
+        Self(requestBuilder: requestBuilder.retry(policy))
     }
 
     public func validate(_ policy: NXValidationPolicy) -> Self {
-        modifying { requestSpec in
-            requestSpec.validationPolicy = policy
-        }
+        Self(requestBuilder: requestBuilder.validate(policy))
     }
 
     public func intercept(_ interceptor: any NXHTTPInterceptor) -> Self {
-        modifying { requestSpec in
-            requestSpec.requestInterceptors.append(interceptor)
-        }
+        Self(requestBuilder: requestBuilder.intercept(interceptor))
     }
 
     public func preparedURLRequest() async throws -> URLRequest {
-        try NXRequestAssembler.assemble(clientConfiguration: clientConfiguration, requestSpec: requestSpec)
+        try await requestBuilder.preparedURLRequest()
     }
 
     public func raw() async throws -> NXRawResponse {
-        try await NXRequestExecutor.executeRaw(clientConfiguration: clientConfiguration, requestSpec: requestSpec)
+        try await requestBuilder.raw()
     }
 
     public func send() async throws -> Response {
@@ -107,12 +88,6 @@ public struct NXTypedRequestBuilder<Response>: Sendable where Response: Decodabl
     }
 
     public func sendVoid() async throws {
-        _ = try await raw()
-    }
-
-    func modifying(_ update: (inout RequestSpec) throws -> Void) rethrows -> Self {
-        var copiedRequestSpec = requestSpec
-        try update(&copiedRequestSpec)
-        return Self(clientConfiguration: clientConfiguration, requestSpec: copiedRequestSpec)
+        try await requestBuilder.sendVoid()
     }
 }
