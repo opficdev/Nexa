@@ -36,11 +36,6 @@ public struct NXRequestBuilder: Sendable {
     let clientConfiguration: NXClientConfiguration
     let requestSpec: RequestSpec
 
-    init(clientConfiguration: NXClientConfiguration, requestSpec: RequestSpec) {
-        self.clientConfiguration = clientConfiguration
-        self.requestSpec = requestSpec
-    }
-
     /// Appends a query item to the request URL.
     ///
     /// - Parameters:

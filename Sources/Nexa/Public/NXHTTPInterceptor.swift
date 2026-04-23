@@ -57,22 +57,6 @@ public struct NXRequestExecutionContext: Sendable {
     let specification: RequestSpec
     let clientConfiguration: NXClientConfiguration
 
-    init(
-        request: URLRequest,
-        requestIdentifier: UUID,
-        attemptNumber: Int,
-        userInfo: [String: String],
-        specification: RequestSpec,
-        clientConfiguration: NXClientConfiguration
-    ) {
-        self.request = request
-        self.requestIdentifier = requestIdentifier
-        self.attemptNumber = attemptNumber
-        self.userInfo = userInfo
-        self.specification = specification
-        self.clientConfiguration = clientConfiguration
-    }
-
     /// Returns a copy of the context with a different request value.
     ///
     /// - Parameter request: Replacement request to use for the remaining chain.

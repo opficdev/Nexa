@@ -60,7 +60,10 @@ enum NXRequestAssembler {
         return "\(normalizedBasePath)\(separator)\(normalizedRequestPath)"
     }
 
-    private static func mergedHeaders(clientConfiguration: NXClientConfiguration, requestSpec: RequestSpec) -> [String: String] {
+    private static func mergedHeaders(
+        clientConfiguration: NXClientConfiguration,
+        requestSpec: RequestSpec
+    ) -> [String: String] {
         clientConfiguration.headers.merging(requestSpec.headers) { $1 }
     }
 
