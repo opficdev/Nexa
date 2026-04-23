@@ -73,7 +73,7 @@ enum NXRequestExecutor {
     ) -> [any NXHTTPInterceptor] {
         var interceptors: [any NXHTTPInterceptor] = [
             NXRetryInterceptor(),
-            NXAuthInterceptor(),
+            NXAuthInterceptor()
         ]
         interceptors.append(contentsOf: clientConfiguration.interceptors)
         interceptors.append(contentsOf: requestSpec.requestInterceptors)
