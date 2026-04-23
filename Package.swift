@@ -16,15 +16,27 @@ let package = Package(
             targets: ["Nexa"]
         ),
     ],
+    dependencies: [
+        .package(
+            url: "https://github.com/SimplyDanny/SwiftLintPlugins.git",
+            exact: "0.63.2"
+        ),
+    ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "Nexa"
+            name: "Nexa",
+            plugins: [
+                .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")
+            ]
         ),
         .testTarget(
             name: "NexaTests",
-            dependencies: ["Nexa"]
+            dependencies: ["Nexa"],
+            plugins: [
+                .plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")
+            ]
         ),
     ],
     swiftLanguageModes: [.v6]
