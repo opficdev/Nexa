@@ -28,7 +28,7 @@ jobs:
       RELEASE_NOTES: ${{ inputs.release_notes }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -73,7 +73,7 @@ jobs:
 
       - name: Upload deploy test log artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: deploy-spm-test-log
           path: deploy-test.log
@@ -91,7 +91,7 @@ jobs:
           git push origin "$VERSION"
 
       - name: Create GitHub release
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           VERSION: ${{ env.VERSION }}
           RELEASE_NOTES: ${{ env.RELEASE_NOTES }}
