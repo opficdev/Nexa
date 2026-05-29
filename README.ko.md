@@ -7,41 +7,41 @@
 
 [English](README.md) | [한국어](README.ko.md)
 
-Nexa is a SwiftUI-inspired declarative networking library built on `URLSession`.
+Nexa는 `URLSession` 기반의 SwiftUI 스타일 선언형 네트워킹 라이브러리입니다.
 
-- [Features](#features)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Public API](#public-api)
-- [Quick Start](#quick-start)
+- [기능](#기능)
+- [요구 사항](#요구-사항)
+- [설치](#설치)
+- [공개 API](#공개-api)
+- [빠른 시작](#빠른-시작)
 - [Endpoint API](#endpoint-api)
-- [Configuration](#configuration)
-- [Testing](#testing)
+- [설정](#설정)
+- [테스트](#테스트)
 
-## Features
+## 기능
 
-- [x] Declarative request builders for `GET`, `POST`, `PUT`, `PATCH`, and `DELETE`
-- [x] Typed response decoding with Swift Concurrency
-- [x] Value-semantic request composition
-- [x] Query, header, timeout, body, and JSON encoding support
-- [x] Endpoint-based API with compile-time response typing
-- [x] Request-level and global interceptor chains
-- [x] Built-in authentication and token refresh flow through `NXAuthTokenProvider`
-- [x] Retry policies with fixed and exponential backoff
-- [x] Response validation and server error decoding
-- [x] Logger hooks and transport abstraction for testing
+- [x] `GET`, `POST`, `PUT`, `PATCH`, `DELETE`를 위한 선언형 요청 빌더
+- [x] Swift Concurrency를 활용한 타입 안전 응답 디코딩
+- [x] 값 타입 기반 요청 조합
+- [x] 쿼리, 헤더, 타임아웃, 바디, JSON 인코딩 지원
+- [x] 컴파일 타임 응답 타입을 갖는 Endpoint 기반 API
+- [x] 요청 단위 및 전역 인터셉터 체인
+- [x] `NXAuthTokenProvider`를 통한 인증 및 토큰 갱신 흐름 내장
+- [x] Fixed backoff 및 exponential backoff 기반 재시도 정책
+- [x] 응답 유효성 검사 및 서버 에러 디코딩
+- [x] 로거 훅 및 테스트를 위한 transport 추상화
 
-## Requirements
+## 요구 사항
 
-| Platform | Swift | Installation |
+| 플랫폼 | Swift | 설치 |
 | --- | --- | --- |
 | iOS 15.0+ / macOS 12.0+ | Swift 6.1 | [Swift Package Manager](#swift-package-manager) |
 
-## Installation
+## 설치
 
 ### Swift Package Manager
 
-Add Nexa to your `Package.swift`:
+`Package.swift`에 Nexa를 추가하세요:
 
 ```swift
 dependencies: [
@@ -49,7 +49,7 @@ dependencies: [
 ]
 ```
 
-Then add `Nexa` to your target dependencies:
+그런 다음 타겟 의존성에 `Nexa`를 추가하세요:
 
 ```swift
 .target(
@@ -60,35 +60,35 @@ Then add `Nexa` to your target dependencies:
 )
 ```
 
-## Public API
+## 공개 API
 
-Most code starts from `NXAPIClient`, then moves into either `NXRequestBuilder` or `NXTypedRequestBuilder<Response>`. 
+대부분의 코드는 `NXAPIClient`에서 시작하여 `NXRequestBuilder` 또는 `NXTypedRequestBuilder<Response>`로 이어집니다.
 
-The rest of the public surface is made of extension points for auth, logging, testing, retry, validation, and custom error mapping.
+나머지 공개 인터페이스는 인증, 로깅, 테스트, 재시도, 유효성 검사, 커스텀 에러 매핑을 위한 확장 포인트로 구성됩니다.
 
-| API | When to use it | Example |
+| API | 사용 시점 | 예시 |
 | --- | --- | --- |
-| `NXAPIClient` | Main entry point for requests that share one `baseURL` and one configuration | `client.get("/users", as: User.self).send()` |
-| `NXRequestBuilder` | When you want to inspect the assembled `URLRequest` or receive `NXRawResponse` without decoding | `try await client.get("/users").raw()` |
-| `NXTypedRequestBuilder<Response>` | When the response should decode directly into a `Decodable` type | `try await client.get("/users/1", as: User.self).send()` |
-| `NXEndpoint` | When an endpoint definition should be reusable and carry its response type with it | `try await client.send(UserEndpoint(identifier: 1))` |
-| `NXClientConfiguration` | When shared headers, transport, logger, auth, encoder, decoder, or interceptors should be configured once | `NXClientConfiguration(baseURL: url, authTokenProvider: yourAuthTokenProvider)` |
-| `NXRetryPolicy` | When a request should retry on retryable status codes or transport failures | `.retry(.init(maxAttempts: 3))` |
-| `NXValidationPolicy` | When the accepted status codes differ from the default `200..<300` | `.validate(.statusCodes([200, 201, 204]))` |
-| `NXHTTPTransport` | When you need stubs in tests or want to replace the transport implementation | `NXClientConfiguration(baseURL: url, transport: yourStubTransport)` |
-| `NXHTTPInterceptor` | When you need cross-cutting request behavior such as tracing or header injection | `.intercept(yourInterceptor)` |
-| `NXAuthTokenProvider` | When `.authorized()` requests need token lookup and refresh support | `authTokenProvider: yourAuthTokenProvider` |
-| `NXServerErrorDecoder` | When failed responses should decode into your own domain error | `serverErrorDecoder: yourServerErrorDecoder` |
-| `NXLogger` | When you want structured request lifecycle logging | `logger: yourLogger` |
-| `NXRawResponse` | When you need both `Data` and `HTTPURLResponse` directly | `let response = try await client.get("/users").raw()` |
-| `NXError` | When handling Nexa-specific failures in calling code | `catch let error as NXError` |
-| `NXHTTPMethod` | When defining an `NXEndpoint` method | `var method: NXHTTPMethod { .post }` |
+| `NXAPIClient` | 동일한 `baseURL`과 설정을 공유하는 요청의 주 진입점 | `client.get("/users", as: User.self).send()` |
+| `NXRequestBuilder` | 조립된 `URLRequest`를 직접 확인하거나 디코딩 없이 `NXRawResponse`를 받고 싶을 때 | `try await client.get("/users").raw()` |
+| `NXTypedRequestBuilder<Response>` | 응답을 `Decodable` 타입으로 바로 디코딩할 때 | `try await client.get("/users/1", as: User.self).send()` |
+| `NXEndpoint` | 엔드포인트 정의를 재사용하고 응답 타입을 함께 관리할 때 | `try await client.send(UserEndpoint(identifier: 1))` |
+| `NXClientConfiguration` | 공통 헤더, transport, 로거, 인증, 인코더, 디코더, 인터셉터를 한 번에 설정할 때 | `NXClientConfiguration(baseURL: url, authTokenProvider: yourAuthTokenProvider)` |
+| `NXRetryPolicy` | 재시도 가능한 상태 코드나 전송 오류 시 재시도할 때 | `.retry(.init(maxAttempts: 3))` |
+| `NXValidationPolicy` | 허용할 상태 코드가 기본값(`200..<300`)과 다를 때 | `.validate(.statusCodes([200, 201, 204]))` |
+| `NXHTTPTransport` | 테스트용 스텁이 필요하거나 transport 구현을 교체할 때 | `NXClientConfiguration(baseURL: url, transport: yourStubTransport)` |
+| `NXHTTPInterceptor` | 트레이싱이나 헤더 주입처럼 요청 전반에 적용되는 처리가 필요할 때 | `.intercept(yourInterceptor)` |
+| `NXAuthTokenProvider` | `.authorized()` 요청에 토큰 조회 및 갱신 기능이 필요할 때 | `authTokenProvider: yourAuthTokenProvider` |
+| `NXServerErrorDecoder` | 실패 응답을 도메인 에러로 디코딩할 때 | `serverErrorDecoder: yourServerErrorDecoder` |
+| `NXLogger` | 구조화된 요청 생명주기 로깅이 필요할 때 | `logger: yourLogger` |
+| `NXRawResponse` | `Data`와 `HTTPURLResponse`를 직접 다뤄야 할 때 | `let response = try await client.get("/users").raw()` |
+| `NXError` | 호출 코드에서 Nexa 고유 오류를 처리할 때 | `catch let error as NXError` |
+| `NXHTTPMethod` | `NXEndpoint`의 메서드를 정의할 때 | `var method: NXHTTPMethod { .post }` |
 
-### Which one should I start with?
+### 어디서 시작할까요?
 
-Assume `client` below is an `NXAPIClient` that has already been configured.
+아래에서 `client`는 이미 설정된 `NXAPIClient`라고 가정합니다.
 
-Use `NXAPIClient` + `NXTypedRequestBuilder<Response>` for most application code:
+대부분의 앱 코드에서는 `NXAPIClient`와 `NXTypedRequestBuilder<Response>` 조합을 사용할 수 있습니다.
 
 ```swift
 import Foundation
@@ -104,7 +104,7 @@ let user = try await client
     .send()
 ```
 
-Use `NXRequestBuilder` when you want to inspect the request or handle the raw response yourself:
+요청을 직접 확인하거나 원시 응답을 직접 처리할 때는 `NXRequestBuilder`를 사용하면 됩니다.
 
 ```swift
 import Foundation
@@ -116,7 +116,7 @@ let request = try await client
     .preparedURLRequest()
 ```
 
-Use `NXEndpoint` when the same endpoint shape is reused in several places:
+동일한 엔드포인트 형태가 여러 곳에서 재사용될 때는 `NXEndpoint`를 사용하면 됩니다.
 
 ```swift
 import Foundation
@@ -139,15 +139,15 @@ struct UserEndpoint: NXEndpoint {
 }
 ```
 
-Use the lower-level protocols only when the default behavior is not enough:
+기본 동작으로 충분하지 않을 때만 하위 레벨 프로토콜을 사용하면 됩니다.
 
-- `NXHTTPTransport`: stubs, mocks, custom network backends
-- `NXHTTPInterceptor`: tracing, request mutation, custom flow control
-- `NXAuthTokenProvider`: bearer token injection and refresh
-- `NXServerErrorDecoder`: server payload to domain error mapping
-- `NXLogger`: request lifecycle logging and observability
+- `NXHTTPTransport`: 스텁, 목, 커스텀 네트워크 백엔드
+- `NXHTTPInterceptor`: 트레이싱, 요청 변환, 커스텀 흐름 제어
+- `NXAuthTokenProvider`: bearer token 주입 및 갱신
+- `NXServerErrorDecoder`: 서버 payload를 도메인 에러로 매핑
+- `NXLogger`: 요청 생명주기 로깅 및 관측성
 
-## Request Flow
+## 요청 흐름
 
 ```mermaid
 sequenceDiagram
@@ -203,9 +203,9 @@ sequenceDiagram
     end
 ```
 
-## Quick Start
+## 빠른 시작
 
-Nexa keeps request code compact while still exposing auth, retry, validation, and decoding in one flow.
+Nexa는 인증, 재시도, 유효성 검사, 디코딩을 하나의 흐름으로 간결하게 표현합니다.
 
 ```swift
 import Foundation
@@ -229,9 +229,9 @@ let user = try await client
     .send()
 ```
 
-Add `.authorized()` only when the client has an `authTokenProvider`.
+`.authorized()`는 클라이언트에 `authTokenProvider`가 설정된 경우에만 추가하세요.
 
-You can also build requests step by step:
+단계별로 요청을 구성할 수도 있습니다:
 
 ```swift
 import Foundation
@@ -255,7 +255,7 @@ let createdUser = try await client
 
 ## Endpoint API
 
-If you prefer a Moya-style endpoint abstraction, define an `NXEndpoint` and let Nexa keep the response type attached to the endpoint itself.
+Moya 스타일의 엔드포인트 추상화를 선호한다면, `NXEndpoint`를 정의하여 응답 타입을 엔드포인트에 직접 연결할 수 있습니다.
 
 ```swift
 import Foundation
@@ -282,9 +282,9 @@ struct UserEndpoint: NXEndpoint {
 let user = try await client.send(UserEndpoint(identifier: 42))
 ```
 
-## Configuration
+## 설정
 
-`NXClientConfiguration` centralizes the pieces that usually spread across a custom API layer.
+`NXClientConfiguration`은 커스텀 API 레이어에 흩어지기 쉬운 설정을 한 곳에 집중시킵니다.
 
 ```swift
 import Foundation
@@ -305,25 +305,25 @@ let configuration = NXClientConfiguration(
 let client = NXAPIClient(configuration: configuration)
 ```
 
-Replace the defaults with your own conforming types only when you need custom behavior:
+커스텀 동작이 필요할 때만 기본값을 직접 구현한 타입으로 교체하세요:
 
-- `NXLogger` for structured logging
-- `NXHTTPInterceptor` for request tracing or mutation
-- `NXServerErrorDecoder` for mapping failed responses to domain errors
-- `NXAuthTokenProvider` for bearer token injection and refresh
+- `NXLogger`: 구조화된 로깅
+- `NXHTTPInterceptor`: 요청 트레이싱 또는 변환
+- `NXServerErrorDecoder`: 실패 응답을 도메인 에러로 매핑
+- `NXAuthTokenProvider`: bearer token 주입 및 갱신
 
-Nexa currently supports:
+현재 Nexa가 지원하는 기능:
 
-- Global headers and per-request headers
-- Raw body and JSON body encoding
-- Request-level validation policies
-- Automatic auth header injection for `authorized()` requests
-- Token refresh and retry handling
-- Custom transports for stubbing and isolated tests
+- 전역 헤더 및 요청별 헤더
+- 원시 바디 및 JSON 바디 인코딩
+- 요청 단위 유효성 검사 정책
+- `.authorized()` 요청에 대한 자동 인증 헤더 주입
+- 토큰 갱신 및 재시도 처리
+- 스터빙 및 격리 테스트를 위한 커스텀 transport
 
-## Testing
+## 테스트
 
-Nexa was designed to keep request execution testable. `NXHTTPTransport` lets you replace live networking with a custom transport and validate the outgoing request and decoded response.
+Nexa는 요청 실행을 테스트하기 쉽도록 설계되었습니다. `NXHTTPTransport`를 통해 실제 네트워킹을 커스텀 transport로 교체하고 발신 요청과 디코딩된 응답을 검증할 수 있습니다.
 
 ```swift
 import Foundation
