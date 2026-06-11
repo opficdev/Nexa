@@ -48,7 +48,7 @@ public struct NXAPIClient: Sendable {
     ///
     /// - Parameter path: Path relative to the configured base URL.
     /// - Returns: A request builder that can be further configured before sending.
-    public func get(_ path: String) -> NXRequestBuilder {
+    public func get(_ path: String = "") -> NXRequestBuilder {
         request(method: .get, path: path)
     }
 
@@ -58,7 +58,7 @@ public struct NXAPIClient: Sendable {
     ///   - path: Path relative to the configured base URL.
     ///   - type: Response type to decode when the request succeeds.
     /// - Returns: A typed request builder that decodes into `Response`.
-    public func get<Response: Decodable>(_ path: String, as type: Response.Type) -> NXTypedRequestBuilder<Response> {
+    public func get<Response: Decodable>(_ path: String = "", as type: Response.Type) -> NXTypedRequestBuilder<Response> {
         typedRequest(method: .get, path: path)
     }
 

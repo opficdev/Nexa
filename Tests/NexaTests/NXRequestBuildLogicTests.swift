@@ -78,6 +78,30 @@ struct NXRequestBuildLogicTests {
         #expect(request.url?.absoluteString == "https://example.com/api/")
     }
 
+    @Test("GET 요청 path를 생략하면 baseURL path를 사용한다")
+    func usesBaseURLPathWhenGetPathIsOmitted() async throws {
+        let client = makeClient(baseURL: URL(string: "https://example.com/api")!)
+        let builder = client.get()
+
+        let request = try await builder.preparedURLRequest()
+
+        #expect(request.httpMethod == "GET")
+        #expect(request.url?.absoluteString == "https://example.com/api")
+    }
+
+    @Test("타입 지정 GET 요청 path를 생략하면 baseURL path를 사용한다")
+    func usesBaseURLPathWhenTypedGetPathIsOmitted() async throws {
+        struct UserDTO: Decodable {}
+
+        let client = makeClient(baseURL: URL(string: "https://example.com/api")!)
+        let builder = client.get(as: UserDTO.self)
+
+        let request = try await builder.preparedURLRequest()
+
+        #expect(request.httpMethod == "GET")
+        #expect(request.url?.absoluteString == "https://example.com/api")
+    }
+
     private func makeClient(baseURL: URL) -> NXAPIClient {
         NXAPIClient(
             configuration: NXClientConfiguration(
