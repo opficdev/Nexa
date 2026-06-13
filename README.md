@@ -16,6 +16,7 @@ Nexa is a SwiftUI-inspired declarative networking library built on `URLSession`.
 - [Quick Start](#quick-start)
 - [Endpoint API](#endpoint-api)
 - [Configuration](#configuration)
+- [Development](#development)
 - [Testing](#testing)
 
 ## Features
@@ -320,6 +321,18 @@ Nexa currently supports:
 - Automatic auth header injection for `authorized()` requests
 - Token refresh and retry handling
 - Custom transports for stubbing and isolated tests
+
+## Development
+
+Nexa keeps SwiftLint out of the distributable package graph so package consumers do not inherit maintainer lint rules.
+
+For local library development, use `Examples/NexaClient/NexaClient.xcodeproj`.
+
+- Build the `NexaClient` target in Xcode to validate the local package integration path
+- The app target runs `swiftlint` against the repository root during build
+- If `swiftlint` is missing locally, the script phase fails with an installation hint
+
+This project is a maintainer-only integration host. It is not required for apps that depend on Nexa through Swift Package Manager.
 
 ## Testing
 
