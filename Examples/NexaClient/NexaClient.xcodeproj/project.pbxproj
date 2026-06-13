@@ -161,7 +161,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if ! command -v swiftlint >/dev/null 2>&1; then\n  echo \"error: SwiftLint not installed. Install it with 'brew install swiftlint'.\"\n  exit 1\nfi\n\nREPO_ROOT=\"${SRCROOT}/../..\"\ncd \"$REPO_ROOT\"\nswiftlint --config .swiftlint.yml lint\n";
+			shellScript = "export PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\"\n\nif ! command -v swiftlint >/dev/null 2>&1; then\n  echo \"error: SwiftLint not installed. Install it with 'brew install swiftlint'.\"\n  exit 1\nfi\n\nREPO_ROOT=\"${SRCROOT}/../..\"\ncd \"$REPO_ROOT\"\nswiftlint --config .swiftlint.yml lint\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
