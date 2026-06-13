@@ -16,6 +16,7 @@ Nexa는 `URLSession` 기반의 SwiftUI 스타일 선언형 네트워킹 라이�
 - [빠른 시작](#빠른-시작)
 - [Endpoint API](#endpoint-api)
 - [설정](#설정)
+- [개발](#개발)
 - [테스트](#테스트)
 
 ## 기능
@@ -320,6 +321,18 @@ let client = NXAPIClient(configuration: configuration)
 - `.authorized()` 요청에 대한 자동 인증 헤더 주입
 - 토큰 갱신 및 재시도 처리
 - 스터빙 및 격리 테스트를 위한 커스텀 transport
+
+## 개발
+
+Nexa는 배포되는 package graph에서 SwiftLint를 분리하여 패키지 소비자가 maintainer용 lint 규칙을 함께 받지 않도록 구성합니다.
+
+로컬 라이브러리 개발 시에는 `Examples/NexaClient/NexaClient.xcodeproj`를 사용하면 됩니다.
+
+- Xcode에서 `NexaClient` 타깃을 build하여 local package integration 경로를 확인
+- app target build 시 repo 루트 기준으로 `swiftlint` 실행
+- 로컬에 `swiftlint`가 없으면 script phase가 설치 안내와 함께 실패
+
+이 project는 maintainer 전용 integration host이며 Swift Package Manager로 Nexa를 사용하는 앱에는 필요하지 않습니다.
 
 ## 테스트
 
