@@ -30,6 +30,7 @@ Nexa is a SwiftUI-inspired declarative networking library built on `URLSession`.
 - [x] Built-in authentication and token refresh flow through `NXAuthTokenProvider`
 - [x] Retry policies with fixed and exponential backoff
 - [x] Response validation and server error decoding
+- [x] Memory response cache for successful `GET` responses and in-flight identical requests
 - [x] Logger hooks and transport abstraction for testing
 
 ## Requirements
@@ -74,6 +75,7 @@ The rest of the public surface is made of extension points for auth, logging, te
 | `NXTypedRequestBuilder<Response>` | When the response should decode directly into a `Decodable` type | `try await client.get("/users/1", as: User.self).send()` |
 | `NXEndpoint` | When an endpoint definition should be reusable and carry its response type with it | `try await client.send(UserEndpoint(identifier: 1))` |
 | `NXClientConfiguration` | When shared headers, transport, logger, auth, encoder, decoder, or interceptors should be configured once | `NXClientConfiguration(baseURL: url, authTokenProvider: yourAuthTokenProvider)` |
+| `NXCache` | When successful unauthenticated `GET` responses should be reused for a short TTL | `NXClientConfiguration(baseURL: url, cache: .memory(ttl: 0.3))` |
 | `NXRetryPolicy` | When a request should retry on retryable status codes or transport failures | `.retry(.init(maxAttempts: 3))` |
 | `NXValidationPolicy` | When the accepted status codes differ from the default `200..<300` | `.validate(.statusCodes([200, 201, 204]))` |
 | `NXHTTPTransport` | When you need stubs in tests or want to replace the transport implementation | `NXClientConfiguration(baseURL: url, transport: yourStubTransport)` |
@@ -299,6 +301,7 @@ let configuration = NXClientConfiguration(
     transport: NXURLSessionTransport(),
     logger: NXNoopLogger(),
     interceptors: [],
+    cache: .memory(ttl: 0.3),
     serverErrorDecoder: NXDefaultServerErrorDecoder(),
     authTokenProvider: nil
 )
@@ -318,6 +321,8 @@ Nexa currently supports:
 - Global headers and per-request headers
 - Raw body and JSON body encoding
 - Request-level validation policies
+- In-memory reuse of successful unauthenticated `GET` responses within a TTL
+- In-flight identical `GET` request reuse while the first request is still running
 - Automatic auth header injection for `authorized()` requests
 - Token refresh and retry handling
 - Custom transports for stubbing and isolated tests

@@ -40,6 +40,8 @@ public struct NXClientConfiguration: Sendable {
     public let logger: any NXLogger
     /// Interceptors applied to every request.
     public let interceptors: [any NXHTTPInterceptor]
+    /// Response cache behavior for successful GET responses and in-flight identical requests.
+    public let cache: NXCache
     /// Decoder used by typed requests to decode the response body.
     public let decoder: JSONDecoder
     /// Encoder used for JSON request bodies when no encoder is passed to `json(_:encoder:)`.
@@ -57,6 +59,7 @@ public struct NXClientConfiguration: Sendable {
     ///   - transport: Transport used to execute requests.
     ///   - logger: Logger that receives request lifecycle events.
     ///   - interceptors: Interceptors applied to every request.
+    ///   - cache: Response cache behavior for successful GET responses and in-flight identical requests.
     ///   - decoder: Decoder used for typed responses.
     ///   - encoder: Encoder used for JSON request bodies.
     ///   - serverErrorDecoder: Decoder used to map failed responses to custom errors.
@@ -67,6 +70,7 @@ public struct NXClientConfiguration: Sendable {
         transport: any NXHTTPTransport = NXURLSessionTransport(),
         logger: any NXLogger = NXNoopLogger(),
         interceptors: [any NXHTTPInterceptor] = [],
+        cache: NXCache = .disabled,
         decoder: JSONDecoder = JSONDecoder(),
         encoder: JSONEncoder = JSONEncoder(),
         serverErrorDecoder: any NXServerErrorDecoder = NXDefaultServerErrorDecoder(),
@@ -77,6 +81,7 @@ public struct NXClientConfiguration: Sendable {
         self.transport = transport
         self.logger = logger
         self.interceptors = interceptors
+        self.cache = cache
         self.decoder = decoder
         self.encoder = encoder
         self.serverErrorDecoder = serverErrorDecoder
