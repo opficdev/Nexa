@@ -19,8 +19,12 @@ actor NXResponseCacheStore {
     ) async throws -> NXRawResponse {
         let now = Date()
 
-        if let cachedResponse = responses[key], now < cachedResponse.expirationDate {
-            return cachedResponse.rawResponse
+        if let cachedResponse = responses[key] {
+            if now < cachedResponse.expirationDate {
+                return cachedResponse.rawResponse
+            }
+
+            responses.removeValue(forKey: key)
         }
 
         if let task = inFlightTasks[key] {

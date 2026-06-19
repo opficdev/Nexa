@@ -88,6 +88,42 @@ struct NXResponseCacheInterceptorTests {
         #expect(await attemptCounter.value() == 2)
     }
 
+    @Test("TTL이 지난 캐시 응답은 실패한 재요청에 재사용하지 않는다")
+    func expiredCacheResponseIsNotReusedAfterReloadFailure() async throws {
+        let attemptCounter = AttemptCounter()
+        let client = makeClient(
+            transport: ClosureTransport { _ in
+                let attemptNumber = await attemptCounter.increment()
+
+                if attemptNumber == 1 {
+                    return makeRawResponse(
+                        statusCode: 200,
+                        body: #"{"id":1,"name":"cached"}"#,
+                        path: "/users"
+                    )
+                }
+
+                throw URLError(.timedOut)
+            },
+            cache: .memory(ttl: 0.01)
+        )
+
+        let firstUser = try await client.get("/users", as: UserDTO.self).send()
+        try await Task.sleep(nanoseconds: 20_000_000)
+
+        await #expect {
+            let _: UserDTO = try await client.get("/users", as: UserDTO.self).send()
+        } throws: { error in
+            guard case NXError.timeout = error else {
+                return false
+            }
+            return true
+        }
+
+        #expect(firstUser == UserDTO(id: 1, name: "cached"))
+        #expect(await attemptCounter.value() == 2)
+    }
+
     @Test("POST 요청은 캐시하지 않는다")
     func postRequestDoesNotUseCache() async throws {
         let attemptCounter = AttemptCounter()
