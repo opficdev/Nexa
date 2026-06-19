@@ -10,6 +10,7 @@ import Foundation
 enum NXRequestExecutor {
     static func executeRaw(
         clientConfiguration: NXClientConfiguration,
+        responseCacheStore: NXResponseCacheStore?,
         requestSpec: RequestSpec
     ) async throws -> NXRawResponse {
         do {
@@ -29,6 +30,7 @@ enum NXRequestExecutor {
                 context: context,
                 interceptors: runtimeInterceptors(
                     clientConfiguration: clientConfiguration,
+                    responseCacheStore: responseCacheStore,
                     requestSpec: requestSpec
                 ),
                 transport: clientConfiguration.transport
@@ -48,11 +50,13 @@ enum NXRequestExecutor {
 
     static func executeDecode<T: Decodable>(
         clientConfiguration: NXClientConfiguration,
+        responseCacheStore: NXResponseCacheStore?,
         requestSpec: RequestSpec,
         responseType: T.Type
     ) async throws -> T {
         let rawResponse = try await executeRaw(
             clientConfiguration: clientConfiguration,
+            responseCacheStore: responseCacheStore,
             requestSpec: requestSpec
         )
 
@@ -69,6 +73,7 @@ enum NXRequestExecutor {
 
     private static func runtimeInterceptors(
         clientConfiguration: NXClientConfiguration,
+        responseCacheStore: NXResponseCacheStore?,
         requestSpec: RequestSpec
     ) -> [any NXHTTPInterceptor] {
         var interceptors: [any NXHTTPInterceptor] = [
@@ -78,6 +83,16 @@ enum NXRequestExecutor {
         interceptors.append(contentsOf: clientConfiguration.interceptors)
         interceptors.append(contentsOf: requestSpec.requestInterceptors)
         interceptors.append(NXLoggerInterceptor())
+
+        if let responseCacheStore {
+            interceptors.append(
+                NXResponseCacheInterceptor(
+                    cache: clientConfiguration.cache,
+                    store: responseCacheStore
+                )
+            )
+        }
+
         return interceptors
     }
 }

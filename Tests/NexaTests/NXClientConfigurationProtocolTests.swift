@@ -36,6 +36,7 @@ struct NXClientConfigurationProtocolTests {
             baseURL: URL(string: "https://api.example.com")!,
             headers: ["X-App": "Nexa"],
             transport: transport,
+            cache: .memory(ttl: 5),
             decoder: JSONDecoder(),
             encoder: JSONEncoder(),
             serverErrorDecoder: serverErrorDecoder,
@@ -45,6 +46,7 @@ struct NXClientConfigurationProtocolTests {
         #expect(configuration.baseURL.absoluteString == "https://api.example.com")
         #expect(configuration.headers["X-App"] == "Nexa")
         #expect(configuration.transport is MockTransport)
+        #expect(configuration.cache == .memory(ttl: 5))
         #expect(configuration.serverErrorDecoder is MockServerErrorDecoder)
         #expect(configuration.authTokenProvider is MockAuthTokenProvider)
     }
@@ -54,6 +56,7 @@ struct NXClientConfigurationProtocolTests {
         let configuration = NXClientConfiguration(baseURL: URL(string: "https://api.example.com")!)
 
         #expect(configuration.transport is NXURLSessionTransport)
+        #expect(configuration.cache == .disabled)
         #expect(configuration.serverErrorDecoder is NXDefaultServerErrorDecoder)
         #expect(configuration.authTokenProvider == nil)
     }

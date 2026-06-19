@@ -35,10 +35,6 @@ public struct NXTypedRequestBuilder<Response>: Sendable where Response: Decodabl
         self.requestBuilder = requestBuilder
     }
 
-    var clientConfiguration: NXClientConfiguration {
-        requestBuilder.clientConfiguration
-    }
-
     var requestSpec: RequestSpec {
         requestBuilder.requestSpec
     }
@@ -163,10 +159,6 @@ public struct NXTypedRequestBuilder<Response>: Sendable where Response: Decodabl
     /// - Returns: Decoded response value.
     /// - Throws: `NXError` if the request fails or decoding fails.
     public func send() async throws -> Response {
-        try await NXRequestExecutor.executeDecode(
-            clientConfiguration: clientConfiguration,
-            requestSpec: requestSpec,
-            responseType: Response.self
-        )
+        try await requestBuilder.decoded(Response.self)
     }
 }

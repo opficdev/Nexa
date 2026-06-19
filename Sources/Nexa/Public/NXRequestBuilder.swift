@@ -33,8 +33,19 @@ import Foundation
 ///     .raw()
 /// ```
 public struct NXRequestBuilder: Sendable {
-    let clientConfiguration: NXClientConfiguration
+    private let clientConfiguration: NXClientConfiguration
+    private let responseCacheStore: NXResponseCacheStore?
     let requestSpec: RequestSpec
+
+    init(
+        clientConfiguration: NXClientConfiguration,
+        responseCacheStore: NXResponseCacheStore?,
+        requestSpec: RequestSpec
+    ) {
+        self.clientConfiguration = clientConfiguration
+        self.responseCacheStore = responseCacheStore
+        self.requestSpec = requestSpec
+    }
 
     /// Appends a query item to the request URL.
     ///
@@ -174,7 +185,11 @@ public struct NXRequestBuilder: Sendable {
     ///
     /// - Returns: Raw response data and HTTP metadata.
     public func raw() async throws -> NXRawResponse {
-        try await NXRequestExecutor.executeRaw(clientConfiguration: clientConfiguration, requestSpec: requestSpec)
+        try await NXRequestExecutor.executeRaw(
+            clientConfiguration: clientConfiguration,
+            responseCacheStore: responseCacheStore,
+            requestSpec: requestSpec
+        )
     }
 
     /// Converts the builder into a typed builder that decodes the response.
@@ -185,9 +200,22 @@ public struct NXRequestBuilder: Sendable {
         NXTypedRequestBuilder(requestBuilder: self)
     }
 
+    func decoded<Response: Decodable>(_ type: Response.Type) async throws -> Response {
+        try await NXRequestExecutor.executeDecode(
+            clientConfiguration: clientConfiguration,
+            responseCacheStore: responseCacheStore,
+            requestSpec: requestSpec,
+            responseType: Response.self
+        )
+    }
+
     func modifying(_ update: (inout RequestSpec) throws -> Void) rethrows -> Self {
         var copiedRequestSpec = requestSpec
         try update(&copiedRequestSpec)
-        return Self(clientConfiguration: clientConfiguration, requestSpec: copiedRequestSpec)
+        return Self(
+            clientConfiguration: clientConfiguration,
+            responseCacheStore: responseCacheStore,
+            requestSpec: copiedRequestSpec
+        )
     }
 }
