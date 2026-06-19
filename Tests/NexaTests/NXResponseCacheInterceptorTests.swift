@@ -64,6 +64,33 @@ struct NXResponseCacheInterceptorTests {
         #expect(await attemptCounter.value() == 1)
     }
 
+    @Test("호출자 Task 취소는 진행 중인 동일 GET 요청을 제거하지 않는다")
+    func cancellingCallerTaskDoesNotRemoveInFlightResponse() async throws {
+        let attemptCounter = AttemptCounter()
+        let requestStartProbe = RequestStartProbe()
+        let client = makeClient(
+            transport: ClosureTransport { _ in
+                _ = await attemptCounter.increment()
+                await requestStartProbe.recordStart()
+                try await Task.sleep(nanoseconds: 50_000_000)
+                return makeRawResponse(statusCode: 200, body: #"{"id":1,"name":"cached"}"#, path: "/users")
+            },
+            cache: .memory(ttl: 10)
+        )
+
+        let firstTask = Task {
+            try await client.get("/users", as: UserDTO.self).send()
+        }
+        await requestStartProbe.waitForStart()
+        firstTask.cancel()
+
+        let secondUser = try await client.get("/users", as: UserDTO.self).send()
+        _ = try? await firstTask.value
+
+        #expect(secondUser == UserDTO(id: 1, name: "cached"))
+        #expect(await attemptCounter.value() == 1)
+    }
+
     @Test("TTL이 지난 GET 요청은 새로 실행한다")
     func getRequestAfterTTLExecutesAgain() async throws {
         let attemptCounter = AttemptCounter()
@@ -158,5 +185,28 @@ struct NXResponseCacheInterceptorTests {
                 cache: cache
             )
         )
+    }
+}
+
+private actor RequestStartProbe {
+    private var didStart = false
+    private var continuations: [CheckedContinuation<Void, Never>] = []
+
+    func recordStart() {
+        didStart = true
+        continuations.forEach { continuation in
+            continuation.resume()
+        }
+        continuations.removeAll()
+    }
+
+    func waitForStart() async {
+        if didStart {
+            return
+        }
+
+        await withCheckedContinuation { continuation in
+            continuations.append(continuation)
+        }
     }
 }
