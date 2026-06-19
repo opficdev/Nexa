@@ -35,7 +35,7 @@ import Foundation
 public struct NXRequestBuilder: Sendable {
     private let clientConfiguration: NXClientConfiguration
     private let responseCacheStore: NXResponseCacheStore?
-    let requestSpec: RequestSpec
+    private let requestSpec: RequestSpec
 
     init(
         clientConfiguration: NXClientConfiguration,

@@ -35,10 +35,6 @@ public struct NXTypedRequestBuilder<Response>: Sendable where Response: Decodabl
         self.requestBuilder = requestBuilder
     }
 
-    var requestSpec: RequestSpec {
-        requestBuilder.requestSpec
-    }
-
     /// Appends a query item to the request URL.
     ///
     /// - Parameters:

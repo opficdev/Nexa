@@ -12,14 +12,15 @@ import Testing
 @Suite("요청 본문 처리와 실행 API 테스트")
 struct NXRequestBodyExecutionAPITests {
     @Test("json 본문은 설정 인코더를 사용해 인코딩한다")
-    func jsonBodyUsesConfigurationEncoder() throws {
+    func jsonBodyUsesConfigurationEncoder() async throws {
         let encoder = JSONEncoder()
         encoder.keyEncodingStrategy = .convertToSnakeCase
         let client = makeClient(encoder: encoder)
 
-        let builder = try client.post("/users").json(UserPayload(userName: "opfic"))
-
-        guard case let .data(data) = builder.requestSpec.body else {
+        let request = try await client.post("/users")
+            .json(UserPayload(userName: "opfic"))
+            .preparedURLRequest()
+        guard let data = request.httpBody else {
             Issue.record("body data not found")
             return
         }
@@ -29,16 +30,17 @@ struct NXRequestBodyExecutionAPITests {
     }
 
     @Test("json 본문은 전달된 인코더를 우선 사용한다")
-    func jsonBodyUsesOverrideEncoder() throws {
+    func jsonBodyUsesOverrideEncoder() async throws {
         let defaultEncoder = JSONEncoder()
         defaultEncoder.keyEncodingStrategy = .convertToSnakeCase
 
         let overrideEncoder = JSONEncoder()
         let client = makeClient(encoder: defaultEncoder)
 
-        let builder = try client.post("/users").json(UserPayload(userName: "opfic"), encoder: overrideEncoder)
-
-        guard case let .data(data) = builder.requestSpec.body else {
+        let request = try await client.post("/users")
+            .json(UserPayload(userName: "opfic"), encoder: overrideEncoder)
+            .preparedURLRequest()
+        guard let data = request.httpBody else {
             Issue.record("body data not found")
             return
         }
@@ -48,22 +50,23 @@ struct NXRequestBodyExecutionAPITests {
     }
 
     @Test("body와 contentType modifier는 데이터를 body와 헤더에 각각 저장한다")
-    func rawBodyStoresDataAndHeader() {
+    func rawBodyStoresDataAndHeader() async throws {
         let client = makeClient()
         let payload = Data("hello".utf8)
 
-        let builder = client
+        let request = try await client
             .post("/users")
             .body(payload)
             .contentType("text/plain")
+            .preparedURLRequest()
 
-        guard case let .data(data) = builder.requestSpec.body else {
+        guard let data = request.httpBody else {
             Issue.record("body data not found")
             return
         }
 
         #expect(data == payload)
-        #expect(builder.requestSpec.headers["Content-Type"] == "text/plain")
+        #expect(request.value(forHTTPHeaderField: "Content-Type") == "text/plain")
     }
 
     @Test("실행 API는 transport 응답을 사용한다")
