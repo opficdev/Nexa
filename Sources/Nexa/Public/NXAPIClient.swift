@@ -35,14 +35,14 @@ import Foundation
 ///
 /// Use the untyped overloads when you need a prepared `URLRequest` or `NXRawResponse`.
 public struct NXAPIClient: Sendable {
-    let clientConfiguration: NXClientConfiguration
+    private let configuration: NXClientConfiguration
     private let responseCacheStore: NXResponseCacheStore?
 
     /// Creates a client that uses the provided configuration for all requests.
     ///
     /// - Parameter configuration: Shared settings such as the base URL, transport, logger, and auth provider.
     public init(configuration: NXClientConfiguration) {
-        clientConfiguration = configuration
+        self.configuration = configuration
         responseCacheStore = switch configuration.cache {
         case .disabled:
             nil
@@ -159,7 +159,7 @@ public struct NXAPIClient: Sendable {
 
     func request(method: NXHTTPMethod, path: String) -> NXRequestBuilder {
         NXRequestBuilder(
-            clientConfiguration: clientConfiguration,
+            clientConfiguration: configuration,
             responseCacheStore: responseCacheStore,
             requestSpec: RequestSpec(method: method, path: path)
         )
