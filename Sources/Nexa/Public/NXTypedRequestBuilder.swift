@@ -31,10 +31,6 @@ import Foundation
 public struct NXTypedRequestBuilder<Response>: Sendable where Response: Decodable {
     let requestBuilder: NXRequestBuilder
 
-    init(requestBuilder: NXRequestBuilder) {
-        self.requestBuilder = requestBuilder
-    }
-
     /// Appends a query item to the request URL.
     ///
     /// - Parameters:

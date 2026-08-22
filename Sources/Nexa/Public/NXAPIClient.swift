@@ -66,7 +66,10 @@ public struct NXAPIClient: Sendable {
     ///   - type: Response type to decode when the request succeeds.
     /// - Returns: A typed request builder that decodes into `Response`.
     @available(*, deprecated, message: "Use get(_:) followed by send(as:).")
-    public func get<Response: Decodable>(_ path: String = "", as type: Response.Type) -> NXTypedRequestBuilder<Response> {
+    public func get<Response: Decodable>(
+        _ path: String = "",
+        as type: Response.Type
+    ) -> NXTypedRequestBuilder<Response> {
         typedRequest(method: .get, path: path)
     }
 
