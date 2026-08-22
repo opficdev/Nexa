@@ -100,6 +100,10 @@ actor MemoryLogger: NXLogger {
         }
     }
 
+    func allEvents() -> [NXLogEvent] {
+        events
+    }
+
     func authRefreshLogs() -> [NXAuthRefreshLog] {
         events.compactMap { event in
             guard case let .authRefresh(log) = event else {
@@ -110,12 +114,17 @@ actor MemoryLogger: NXLogger {
     }
 }
 
-func makeRawResponse(statusCode: Int, body: String, path: String = "/") -> NXRawResponse {
+func makeRawResponse(
+    statusCode: Int,
+    body: String,
+    path: String = "/",
+    headers: [String: String]? = nil
+) -> NXRawResponse {
     let response = HTTPURLResponse(
         url: URL(string: "https://example.com\(path)")!,
         statusCode: statusCode,
         httpVersion: nil,
-        headerFields: nil
+        headerFields: headers
     )!
     return NXRawResponse(data: Data(body.utf8), response: response)
 }
