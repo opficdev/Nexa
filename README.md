@@ -168,57 +168,45 @@ Use the lower-level protocols only when the default behavior is not enough:
 ## Request Flow
 
 ```mermaid
-sequenceDiagram
-    autonumber
-    participant App
-    participant Config as NXClientConfiguration
-    participant Client as NXAPIClient
-    participant Builder as Builder
-    participant Assembler as NXRequestAssembler
-    participant Chain as NXInterceptorChain
-    participant Transport as NXHTTPTransport
-    participant Pipeline as NXResponsePipeline
+flowchart TB
+    application[Application] --> client[NXAPIClient]
 
-    App->>Config: 공통 설정 구성
-    App->>Client: NXAPIClient(configuration)
-
-    alt method 기반 호출
-        App->>Client: get/post/put/patch/delete
-        Client->>Builder: NXRequestBuilder
-    else endpoint 기반 호출
-        App->>Client: request(endpoint) / send(endpoint)
-        Client->>Builder: endpoint.configure(NXTypedRequestBuilder)
+    subgraph publicAPI[Public API]
+        client
+        builder[NXRequestBuilder<br/>NXTypedRequestBuilder]
+        endpoint[NXEndpoint]
+        client --> builder
+        client --> endpoint
+        endpoint --> builder
     end
 
-    App->>Builder: query/header/authorized/retry/validate/intercept...
-
-    alt preparedURLRequest()
-        Builder->>Assembler: assemble()
-        Assembler-->>Builder: URLRequest
-        Builder-->>App: URLRequest
-    else send()
-        Builder->>Assembler: assemble()
-        Assembler-->>Builder: URLRequest
-        Builder->>Chain: execute(context)
-        Chain->>Transport: send(request)
-        Transport-->>Chain: NXRawResponse
-        Chain-->>Builder: NXRawResponse
-        Builder->>Pipeline: validate()
-        Pipeline-->>Builder: validated
-        Builder-->>App: NXRawResponse
-    else send(as:) or contextual send()
-        Builder->>Assembler: assemble()
-        Assembler-->>Builder: URLRequest
-        Builder->>Chain: execute(context)
-        Chain->>Transport: send(request)
-        Transport-->>Chain: NXRawResponse
-        Chain-->>Builder: NXRawResponse
-        Builder->>Pipeline: validate()
-        Pipeline-->>Builder: validated
-        Builder->>Pipeline: decode()
-        Pipeline-->>Builder: Response
-        Builder-->>App: Response
+    subgraph core[Core Model]
+        configuration[NXClientConfiguration]
+        requestSpec[RequestSpec]
+        extensionPoints[Extension Points<br/>transport, interceptor, auth, logger, error decoder]
     end
+
+    client --> configuration
+    builder --> requestSpec
+
+    subgraph runtime[Execution Layer]
+        assembler[NXRequestAssembler]
+        executor[NXRequestExecutor]
+        interceptors[NXInterceptorChain<br/>retry, auth, logging, cache]
+        transport[NXHTTPTransport]
+        pipeline[NXResponsePipeline]
+    end
+
+    builder --> assembler --> executor
+    configuration --> executor
+    requestSpec --> executor
+    executor --> interceptors --> transport --> pipeline
+    pipeline --> rawResponse[Raw Response<br/>NXRawResponse]
+    pipeline --> decodedResponse[Decoded Response<br/>Response]
+
+    extensionPoints -.-> interceptors
+    extensionPoints -.-> transport
+    extensionPoints -.-> pipeline
 ```
 
 ## Quick Start

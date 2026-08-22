@@ -168,57 +168,45 @@ struct UserEndpoint: NXEndpoint {
 ## 요청 흐름
 
 ```mermaid
-sequenceDiagram
-    autonumber
-    participant App
-    participant Config as NXClientConfiguration
-    participant Client as NXAPIClient
-    participant Builder as Builder
-    participant Assembler as NXRequestAssembler
-    participant Chain as NXInterceptorChain
-    participant Transport as NXHTTPTransport
-    participant Pipeline as NXResponsePipeline
+flowchart TB
+    application[소비자 앱] --> client[NXAPIClient]
 
-    App->>Config: 공통 설정 구성
-    App->>Client: NXAPIClient(configuration)
-
-    alt method 기반 호출
-        App->>Client: get/post/put/patch/delete
-        Client->>Builder: NXRequestBuilder
-    else endpoint 기반 호출
-        App->>Client: request(endpoint) / send(endpoint)
-        Client->>Builder: endpoint.configure(NXTypedRequestBuilder)
+    subgraph publicAPI[공개 API]
+        client
+        builder[NXRequestBuilder<br/>NXTypedRequestBuilder]
+        endpoint[NXEndpoint]
+        client --> builder
+        client --> endpoint
+        endpoint --> builder
     end
 
-    App->>Builder: query/header/authorized/retry/validate/intercept...
-
-    alt preparedURLRequest()
-        Builder->>Assembler: assemble()
-        Assembler-->>Builder: URLRequest
-        Builder-->>App: URLRequest
-    else send()
-        Builder->>Assembler: assemble()
-        Assembler-->>Builder: URLRequest
-        Builder->>Chain: execute(context)
-        Chain->>Transport: send(request)
-        Transport-->>Chain: NXRawResponse
-        Chain-->>Builder: NXRawResponse
-        Builder->>Pipeline: validate()
-        Pipeline-->>Builder: validated
-        Builder-->>App: NXRawResponse
-    else send(as:) or contextual send()
-        Builder->>Assembler: assemble()
-        Assembler-->>Builder: URLRequest
-        Builder->>Chain: execute(context)
-        Chain->>Transport: send(request)
-        Transport-->>Chain: NXRawResponse
-        Chain-->>Builder: NXRawResponse
-        Builder->>Pipeline: validate()
-        Pipeline-->>Builder: validated
-        Builder->>Pipeline: decode()
-        Pipeline-->>Builder: Response
-        Builder-->>App: Response
+    subgraph core[핵심 모델]
+        configuration[NXClientConfiguration]
+        requestSpec[RequestSpec]
+        extensionPoints[확장 지점<br/>전송, 인터셉터, 인증, 로깅, 오류 디코더]
     end
+
+    client --> configuration
+    builder --> requestSpec
+
+    subgraph runtime[실행 계층]
+        assembler[NXRequestAssembler]
+        executor[NXRequestExecutor]
+        interceptors[NXInterceptorChain<br/>재시도, 인증, 로깅, 응답 캐시]
+        transport[NXHTTPTransport]
+        pipeline[NXResponsePipeline]
+    end
+
+    builder --> assembler --> executor
+    configuration --> executor
+    requestSpec --> executor
+    executor --> interceptors --> transport --> pipeline
+    pipeline --> rawResponse[원시 응답<br/>NXRawResponse]
+    pipeline --> decodedResponse[디코딩된 응답<br/>Response]
+
+    extensionPoints -.-> interceptors
+    extensionPoints -.-> transport
+    extensionPoints -.-> pipeline
 ```
 
 ## 빠른 시작
