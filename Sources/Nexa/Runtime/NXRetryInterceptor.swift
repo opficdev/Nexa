@@ -16,6 +16,10 @@ struct NXRetryInterceptor: NXHTTPInterceptor {
             return try await next(context)
         }
 
+        guard retryPolicy.retryableMethods.contains(context.specification.method) else {
+            return try await next(context)
+        }
+
         for attemptNumber in 1..<retryPolicy.maxAttempts {
             let attemptContext = context.withAttemptNumber(attemptNumber)
 
