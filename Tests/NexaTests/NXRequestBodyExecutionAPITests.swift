@@ -93,6 +93,30 @@ struct NXRequestBodyExecutionAPITests {
         #expect(explicitUser == UserDTO(id: 1, name: "opfic"))
     }
 
+    @Test("기존 실행 API는 새 전송 경로와 같은 결과를 유지한다")
+    func deprecatedExecutionAPIsPreserveResults() async throws {
+        let client = makeClient(
+            transport: ClosureTransport { _ in
+                makeRawResponse(
+                    statusCode: 200,
+                    body: #"{"id":1,"name":"opfic"}"#,
+                    path: "/users"
+                )
+            }
+        )
+
+        let builder = client.get("/users")
+        let rawResponse = try await builder.raw()
+        let convertedUser = try await builder.as(UserDTO.self).send()
+        let typedRawResponse = try await client.get("/users", as: UserDTO.self).raw()
+        let typedUser = try await client.get("/users", as: UserDTO.self).send()
+
+        #expect(rawResponse.response.statusCode == 200)
+        #expect(convertedUser == UserDTO(id: 1, name: "opfic"))
+        #expect(typedRawResponse.response.statusCode == 200)
+        #expect(typedUser == UserDTO(id: 1, name: "opfic"))
+    }
+
     private func makeClient(
         encoder: JSONEncoder = JSONEncoder(),
         transport: any NXHTTPTransport = NXURLSessionTransport()

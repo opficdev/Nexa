@@ -146,15 +146,17 @@ public struct NXTypedRequestBuilder<Response>: Sendable where Response: Decodabl
     /// Sends the request and returns the raw HTTP response.
     ///
     /// - Returns: Raw response data and HTTP metadata.
+    @available(*, deprecated, message: "Use NXRequestBuilder.send().")
     public func raw() async throws -> NXRawResponse {
-        try await requestBuilder.raw()
+        try await requestBuilder.send()
     }
 
     /// Sends the request and decodes the response into `Response`.
     ///
     /// - Returns: Decoded response value.
     /// - Throws: `NXError` if the request fails or decoding fails.
+    @available(*, deprecated, message: "Use NXRequestBuilder.send(as:).")
     public func send() async throws -> Response {
-        try await requestBuilder.decoded(Response.self)
+        try await requestBuilder.send(as: Response.self)
     }
 }
