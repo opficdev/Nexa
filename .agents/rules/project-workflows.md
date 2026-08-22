@@ -7,13 +7,33 @@
 | Swift source or test | `swift build`, `swift test`, changed-file SwiftLint when available |
 | Public API or DocC | `swift build`, `swift test`, `README.md` and `README.ko.md` review |
 | Package manifest | `swift build`, `swift test`, package dependency diff review |
-| AI workflow documents or agent TOML | `git diff --check -- AGENTS.md .agents .codex/agents`, role-model-fallback checks |
+| AI workflow documents or agent TOML | Baseline diff, staged diff, untracked Markdown/TOML format checks, role-model-fallback checks |
 | CI workflow | YAML review and affected workflow check when available |
 
 - `swift build` exit status `0` as build success evidence.
 - `swift test` exit status `0` as test success evidence.
 - Missing SwiftLint binary as unrun check report, not lint success claim.
 - App, Simulator, launch, installation, boot, and build-and-run commands without current-turn user authority prohibited.
+
+### AI workflow document checks
+
+- Baseline diff: `git diff --check origin/develop...HEAD -- AGENTS.md .agents .codex/agents`
+- Staged diff: `git diff --cached --check -- AGENTS.md .agents .codex/agents`
+- Untracked Markdown and TOML files:
+
+```sh
+git ls-files --others --exclude-standard -- AGENTS.md .agents .codex/agents |
+	rg '\.(md|toml)$' |
+	while IFS= read -r file; do
+		output=$(git diff --no-index --check --no-color /dev/null "$file" || true)
+		test -z "$output" || {
+			printf '%s\n' "$output" >&2
+			exit 1
+		}
+	done
+```
+
+- `git diff --no-index --check` exit status `1` alone as file difference, not format failure.
 
 ## Git and delivery
 
