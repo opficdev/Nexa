@@ -2,7 +2,7 @@
 
 > 작업 단위별 검토와 검증 후 다음 단위 진행 구성.
 
-**Goal:** `NXRequestBuilder` 하나에서 raw·문맥 기반·명시적 디코딩 전송을 제공하는 1.3 호환 경로 구성.
+**Goal:** `NXRequestBuilder` 하나에서 raw·문맥 기반·명시적 디코딩 전송을 제공하고, 1.3에서 중복 `raw()` 공개 API를 제거하는 경로 구성.
 
 **Architecture:** 새 전송 API는 기존 `NXRequestExecutor.executeRaw`와 `executeDecode`만 호출. 기존 typed Builder와 endpoint는 새 API를 내부 위임하여 공개 계약 보존.
 
@@ -14,6 +14,7 @@
 
 - `NXEndpoint.configure(_:)` 시그니처 유지
 - `NXTypedRequestBuilder<Response>` 타입 사용 중단 표시 금지
+- `NXRequestBuilder.raw()`와 `NXTypedRequestBuilder.raw()` 공개 API 제거
 - Runtime 실행 순서와 `NXHTTPTransport` 대체 경계 유지
 - App·Simulator 실행 금지
 
@@ -80,4 +81,42 @@
 - [x] 기존 `raw()`·`.as(_:)`·typed HTTP method overload의 대응표 추가
 - [x] Endpoint 경로와 빈 응답 처리 제외 범위 명시
 - [x] `swift build`, `swift test`, 변경 Swift 파일 SwiftLint, `git diff --check` 실행
-- [ ] `docs: 요청 전송 경로 안내 추가` commit
+- [x] `docs: 요청 전송 경로 안내 추가` commit
+
+### Task 4: raw 응답 API 제거 요구사항
+
+**Files:**
+
+- Modify: `.agents/specs/52-request-builder-send-path.md`
+- Modify: `.agents/plans/2026-08-22-request-builder-send-path.md`
+
+- [x] 1.3 source compatibility 요구를 `raw()` 공개 API 제거 요구로 대체
+- [ ] `docs: raw 응답 API 제거 요구사항 갱신` commit
+
+### Task 5: raw 응답 API 제거
+
+**Files:**
+
+- Modify: `Sources/Nexa/Public/NXRequestBuilder.swift`
+- Modify: `Sources/Nexa/Public/NXTypedRequestBuilder.swift`
+- Modify: `Tests/NexaTests/NXRequestBodyExecutionAPITests.swift`
+
+- [ ] 두 `public func raw()` 선언 제거
+- [ ] `.raw()` 실행 호출 제거와 `send()` 원시 응답 검증 유지
+- [ ] `rg -n 'public func raw\\(' Sources/Nexa/Public`와 `rg -n '\\.raw\\(' Tests/NexaTests` 결과 없음 확인
+- [ ] `refactor: raw 응답 API 제거` commit
+
+### Task 6: raw 응답 전환 문서
+
+**Files:**
+
+- Modify: `Sources/Nexa/Nexa.docc/Nexa.md`
+- Modify: `Sources/Nexa/Public/NXRequestBuilder.swift`
+- Modify: `Sources/Nexa/Public/NXTypedRequestBuilder.swift`
+- Modify: `README.md`
+- Modify: `README.ko.md`
+
+- [ ] `raw()` 제거와 `send()` 원시 응답 경로 안내
+- [ ] Endpoint 원시 응답 직접 대체 경로 없음 명시
+- [ ] `swift build`, `swift test`, 변경 Swift 파일 SwiftLint, `git diff --check` 실행
+- [ ] `docs: raw 응답 전환 안내 갱신` commit
