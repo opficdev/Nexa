@@ -184,12 +184,34 @@ public struct NXRequestBuilder: Sendable {
     /// Sends the request and returns the raw HTTP response.
     ///
     /// - Returns: Raw response data and HTTP metadata.
-    public func raw() async throws -> NXRawResponse {
+    public func send() async throws -> NXRawResponse {
         try await NXRequestExecutor.executeRaw(
             clientConfiguration: clientConfiguration,
             responseCacheStore: responseCacheStore,
             requestSpec: requestSpec
         )
+    }
+
+    /// Sends the request and decodes the response into the contextual response type.
+    ///
+    /// - Returns: Decoded response value for `Response`.
+    public func send<Response: Decodable>() async throws -> Response {
+        try await send(as: Response.self)
+    }
+
+    /// Sends the request and decodes the response into the given response type.
+    ///
+    /// - Parameter type: Response type to decode when the request succeeds.
+    /// - Returns: Decoded response value for `Response`.
+    public func send<Response: Decodable>(as type: Response.Type) async throws -> Response {
+        try await decoded(type)
+    }
+
+    /// Sends the request and returns the raw HTTP response.
+    ///
+    /// - Returns: Raw response data and HTTP metadata.
+    public func raw() async throws -> NXRawResponse {
+        try await send()
     }
 
     /// Converts the builder into a typed builder that decodes the response.

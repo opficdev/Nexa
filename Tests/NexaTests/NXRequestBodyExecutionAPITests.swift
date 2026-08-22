@@ -69,8 +69,8 @@ struct NXRequestBodyExecutionAPITests {
         #expect(request.value(forHTTPHeaderField: "Content-Type") == "text/plain")
     }
 
-    @Test("실행 API는 transport 응답을 사용한다")
-    func executionAPIsUseTransportResponses() async throws {
+    @Test("send는 transport 응답을 원시 응답 또는 디코딩 응답으로 반환한다")
+    func sendAPIsUseTransportResponses() async throws {
         let client = makeClient(
             transport: ClosureTransport { request in
                 #expect(request.url?.absoluteString == "https://example.com/users")
@@ -83,13 +83,14 @@ struct NXRequestBodyExecutionAPITests {
         )
         let builder = client.get("/users")
 
-        let rawResponse = try await builder.raw()
+        let rawResponse = try await builder.send()
         #expect(rawResponse.response.statusCode == 200)
 
-        let user = try await builder.as(UserDTO.self).send()
-        #expect(user == UserDTO(id: 1, name: "opfic"))
+        let contextUser: UserDTO = try await builder.send()
+        #expect(contextUser == UserDTO(id: 1, name: "opfic"))
 
-        _ = try await builder.raw()
+        let explicitUser = try await builder.send(as: UserDTO.self)
+        #expect(explicitUser == UserDTO(id: 1, name: "opfic"))
     }
 
     private func makeClient(
