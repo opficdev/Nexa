@@ -207,14 +207,6 @@ public struct NXRequestBuilder: Sendable {
         try await decoded(type)
     }
 
-    /// Sends the request and returns the raw HTTP response.
-    ///
-    /// - Returns: Raw response data and HTTP metadata.
-    @available(*, deprecated, message: "Use send().")
-    public func raw() async throws -> NXRawResponse {
-        try await send()
-    }
-
     /// Converts the builder into a typed builder that decodes the response.
     ///
     /// - Parameter type: Response type to decode when the request succeeds.

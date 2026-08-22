@@ -139,14 +139,6 @@ public struct NXTypedRequestBuilder<Response>: Sendable where Response: Decodabl
         try await requestBuilder.preparedURLRequest()
     }
 
-    /// Sends the request and returns the raw HTTP response.
-    ///
-    /// - Returns: Raw response data and HTTP metadata.
-    @available(*, deprecated, message: "Use NXRequestBuilder.send().")
-    public func raw() async throws -> NXRawResponse {
-        try await requestBuilder.send()
-    }
-
     /// Sends the request and decodes the response into `Response`.
     ///
     /// - Returns: Decoded response value.
