@@ -2,14 +2,14 @@
 
 ## Common sequence
 
-Non-trivial work sequence:
+Non-trivial design and implementation work sequence:
 
 1. Planner creates `Design Brief`.
 2. Designer returns `Designer Result`.
 3. User approves `Designer Result`.
 4. Planner persists approved Spec and creates `Task Packet`.
-5. Implementer changes assigned scope.
-6. Architecture Watcher reviews architecture-sensitive scope.
+5. Architecture-sensitive scope runs Architecture Watcher after `Task Packet` and before Implementer.
+6. Implementer changes assigned scope. Non-architecture scope proceeds directly from `Task Packet`.
 7. Code Reviewer reviews final diff.
 8. Verification Runner records acceptance-criterion evidence and runs allowed checks.
 
