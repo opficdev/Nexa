@@ -11,7 +11,7 @@ import Foundation
 ///
 /// ## Overview
 ///
-/// Use `NXTypedRequestBuilder` for most application code that should decode directly into a `Decodable` model.
+/// `NXTypedRequestBuilder` is retained for `NXEndpoint` configuration compatibility. It does not provide raw-response execution. For method-based requests, use `NXRequestBuilder.send(as:)`.
 ///
 /// ```swift
 /// import Foundation
@@ -23,17 +23,13 @@ import Foundation
 /// }
 ///
 /// let user = try await client
-///     .get("/users/me", as: User.self)
+///     .get("/users/me")
 ///     .query("include", "profile")
 ///     .accept("application/json")
-///     .send()
+///     .send(as: User.self)
 /// ```
 public struct NXTypedRequestBuilder<Response>: Sendable where Response: Decodable {
     let requestBuilder: NXRequestBuilder
-
-    init(requestBuilder: NXRequestBuilder) {
-        self.requestBuilder = requestBuilder
-    }
 
     /// Appends a query item to the request URL.
     ///
@@ -143,18 +139,11 @@ public struct NXTypedRequestBuilder<Response>: Sendable where Response: Decodabl
         try await requestBuilder.preparedURLRequest()
     }
 
-    /// Sends the request and returns the raw HTTP response.
-    ///
-    /// - Returns: Raw response data and HTTP metadata.
-    public func raw() async throws -> NXRawResponse {
-        try await requestBuilder.raw()
-    }
-
     /// Sends the request and decodes the response into `Response`.
     ///
     /// - Returns: Decoded response value.
     /// - Throws: `NXError` if the request fails or decoding fails.
     public func send() async throws -> Response {
-        try await requestBuilder.decoded(Response.self)
+        try await requestBuilder.send(as: Response.self)
     }
 }

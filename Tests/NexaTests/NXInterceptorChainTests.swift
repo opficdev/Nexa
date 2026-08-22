@@ -35,8 +35,7 @@ struct NXInterceptorChainTests {
         let user = try await client
             .get("/users/me")
             .authorized()
-            .as(UserDTO.self)
-            .send()
+            .send(as: UserDTO.self)
 
         #expect(user == UserDTO(id: 1, name: "opfic"))
         #expect(await attemptCounter.value() == 2)
@@ -55,7 +54,7 @@ struct NXInterceptorChainTests {
         )
 
         await #expect {
-            let _: UserDTO = try await client.get("/users", as: UserDTO.self).send()
+            let _: UserDTO = try await client.get("/users").send(as: UserDTO.self)
         } throws: { error in
             guard case NXError.timeout = error else {
                 return false
@@ -84,9 +83,9 @@ struct NXInterceptorChainTests {
         )
 
         let user = try await client
-            .get("/users", as: UserDTO.self)
+            .get("/users")
             .retry(NXRetryPolicy(maxAttempts: 3))
-            .send()
+            .send(as: UserDTO.self)
 
         #expect(user == UserDTO(id: 3, name: "retry"))
         #expect(await attemptCounter.value() == 3)
@@ -107,8 +106,7 @@ struct NXInterceptorChainTests {
         let user = try await client
             .get("/users")
             .intercept(HeaderInterceptor(name: "X-Request-Interceptor", value: "request"))
-            .as(UserDTO.self)
-            .send()
+            .send(as: UserDTO.self)
 
         #expect(user == UserDTO(id: 7, name: "chain"))
     }
@@ -130,8 +128,7 @@ struct NXInterceptorChainTests {
             .get("/users/me")
             .authorized()
             .header("Cookie", "session=abc")
-            .as(UserDTO.self)
-            .send()
+            .send(as: UserDTO.self)
 
         let startLogs = await logger.startLogs()
         #expect(startLogs.count == 1)
@@ -149,6 +146,24 @@ struct NXInterceptorChainTests {
         )
 
         let user = try await client.send(UserEndpoint(identifier: 42))
+
+        #expect(user == UserDTO(id: 42, name: "endpoint"))
+    }
+
+    @Test("Endpoint builder send는 추가 구성과 응답 디코딩을 유지한다")
+    func endpointBuilderSendPreservesConfigurationAndDecodesResponse() async throws {
+        let client = makeClient(
+            transport: ClosureTransport { request in
+                #expect(request.url?.absoluteString == "https://example.com/users/42?include=profile")
+                #expect(request.value(forHTTPHeaderField: "X-Request-Source") == "endpoint")
+                return makeRawResponse(statusCode: 200, body: #"{"id":42,"name":"endpoint"}"#, path: "/users/42")
+            }
+        )
+
+        let user = try await client
+            .request(UserEndpoint(identifier: 42))
+            .header("X-Request-Source", "endpoint")
+            .send()
 
         #expect(user == UserDTO(id: 42, name: "endpoint"))
     }

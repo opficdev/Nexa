@@ -29,11 +29,11 @@ import Foundation
 /// )
 ///
 /// let user = try await client
-///     .get("/users/me", as: User.self)
-///     .send()
+///     .get("/users/me")
+///     .send(as: User.self)
 /// ```
 ///
-/// Use the untyped overloads when you need a prepared `URLRequest` or `NXRawResponse`.
+/// Use the method-based builders for every direct request. `NXEndpoint` retains its typed builder configuration contract for source compatibility.
 public struct NXAPIClient: Sendable {
     private let configuration: NXClientConfiguration
     private let responseCacheStore: NXResponseCacheStore?
@@ -65,7 +65,11 @@ public struct NXAPIClient: Sendable {
     ///   - path: Path relative to the configured base URL.
     ///   - type: Response type to decode when the request succeeds.
     /// - Returns: A typed request builder that decodes into `Response`.
-    public func get<Response: Decodable>(_ path: String = "", as type: Response.Type) -> NXTypedRequestBuilder<Response> {
+    @available(*, deprecated, message: "Use get(_:) followed by send(as:).")
+    public func get<Response: Decodable>(
+        _ path: String = "",
+        as type: Response.Type
+    ) -> NXTypedRequestBuilder<Response> {
         typedRequest(method: .get, path: path)
     }
 
@@ -83,6 +87,7 @@ public struct NXAPIClient: Sendable {
     ///   - path: Path relative to the configured base URL.
     ///   - type: Response type to decode when the request succeeds.
     /// - Returns: A typed request builder that decodes into `Response`.
+    @available(*, deprecated, message: "Use post(_:) followed by send(as:).")
     public func post<Response: Decodable>(_ path: String, as type: Response.Type) -> NXTypedRequestBuilder<Response> {
         typedRequest(method: .post, path: path)
     }
@@ -101,6 +106,7 @@ public struct NXAPIClient: Sendable {
     ///   - path: Path relative to the configured base URL.
     ///   - type: Response type to decode when the request succeeds.
     /// - Returns: A typed request builder that decodes into `Response`.
+    @available(*, deprecated, message: "Use put(_:) followed by send(as:).")
     public func put<Response: Decodable>(_ path: String, as type: Response.Type) -> NXTypedRequestBuilder<Response> {
         typedRequest(method: .put, path: path)
     }
@@ -119,6 +125,7 @@ public struct NXAPIClient: Sendable {
     ///   - path: Path relative to the configured base URL.
     ///   - type: Response type to decode when the request succeeds.
     /// - Returns: A typed request builder that decodes into `Response`.
+    @available(*, deprecated, message: "Use patch(_:) followed by send(as:).")
     public func patch<Response: Decodable>(_ path: String, as type: Response.Type) -> NXTypedRequestBuilder<Response> {
         typedRequest(method: .patch, path: path)
     }
@@ -137,6 +144,7 @@ public struct NXAPIClient: Sendable {
     ///   - path: Path relative to the configured base URL.
     ///   - type: Response type to decode when the request succeeds.
     /// - Returns: A typed request builder that decodes into `Response`.
+    @available(*, deprecated, message: "Use delete(_:) followed by send(as:).")
     public func delete<Response: Decodable>(_ path: String, as type: Response.Type) -> NXTypedRequestBuilder<Response> {
         typedRequest(method: .delete, path: path)
     }
@@ -154,7 +162,7 @@ public struct NXAPIClient: Sendable {
     /// - Parameter endpoint: Endpoint that defines the request.
     /// - Returns: Decoded response value for the endpoint.
     public func send<E: NXEndpoint>(_ endpoint: E) async throws -> E.Response {
-        try await request(endpoint).send()
+        try await request(endpoint).requestBuilder.send(as: E.Response.self)
     }
 
     func request(method: NXHTTPMethod, path: String) -> NXRequestBuilder {
@@ -166,6 +174,6 @@ public struct NXAPIClient: Sendable {
     }
 
     func typedRequest<Response: Decodable>(method: NXHTTPMethod, path: String) -> NXTypedRequestBuilder<Response> {
-        request(method: method, path: path).as(Response.self)
+        NXTypedRequestBuilder(requestBuilder: request(method: method, path: path))
     }
 }

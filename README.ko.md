@@ -15,6 +15,7 @@ Nexa는 `URLSession` 기반의 SwiftUI 스타일 선언형 네트워킹 라이�
 - [공개 API](#공개-api)
 - [빠른 시작](#빠른-시작)
 - [Endpoint API](#endpoint-api)
+- [요청 전환](#요청-전환)
 - [설정](#설정)
 - [개발](#개발)
 - [테스트](#테스트)
@@ -64,15 +65,15 @@ dependencies: [
 
 ## 공개 API
 
-대부분의 코드는 `NXAPIClient`에서 시작하여 `NXRequestBuilder` 또는 `NXTypedRequestBuilder<Response>`로 이어집니다.
+대부분의 코드는 `NXAPIClient`에서 시작하여 하나의 `NXRequestBuilder` 요청 경로로 이어집니다. `NXRawResponse`에는 `send()`, 명시적 디코딩 타입에는 `send(as:)`, 대입문이 타입을 제공할 때는 문맥 기반 `send()`를 사용합니다.
 
 나머지 공개 인터페이스는 인증, 로깅, 테스트, 재시도, 유효성 검사, 커스텀 에러 매핑을 위한 확장 포인트로 구성됩니다.
 
 | API | 사용 시점 | 예시 |
 | --- | --- | --- |
-| `NXAPIClient` | 동일한 `baseURL`과 설정을 공유하는 요청의 주 진입점 | `client.get("/users", as: User.self).send()` |
-| `NXRequestBuilder` | 조립된 `URLRequest`를 직접 확인하거나 디코딩 없이 `NXRawResponse`를 받고 싶을 때 | `try await client.get("/users").raw()` |
-| `NXTypedRequestBuilder<Response>` | 응답을 `Decodable` 타입으로 바로 디코딩할 때 | `try await client.get("/users/1", as: User.self).send()` |
+| `NXAPIClient` | 동일한 `baseURL`과 설정을 공유하는 요청의 주 진입점 | `client.get("/users").send(as: User.self)` |
+| `NXRequestBuilder` | `URLRequest`, `NXRawResponse`, 또는 디코딩된 `Decodable` 응답이 필요할 때 | `try await client.get("/users").send()` |
+| `NXTypedRequestBuilder<Response>` | Endpoint 설정 호환성 경계 | `func configure(_ builder: NXTypedRequestBuilder<User>) -> NXTypedRequestBuilder<User>` |
 | `NXEndpoint` | 엔드포인트 정의를 재사용하고 응답 타입을 함께 관리할 때 | `try await client.send(UserEndpoint(identifier: 1))` |
 | `NXClientConfiguration` | 공통 헤더, transport, 로거, 인증, 인코더, 디코더, 인터셉터를 한 번에 설정할 때 | `NXClientConfiguration(baseURL: url, authTokenProvider: yourAuthTokenProvider)` |
 | `NXCache` | 인증이 필요 없는 성공한 `GET` 응답을 짧은 TTL 동안 재사용할 때 | `NXClientConfiguration(baseURL: url, cache: .memory(ttl: 0.3))` |
@@ -83,7 +84,7 @@ dependencies: [
 | `NXAuthTokenProvider` | `.authorized()` 요청에 토큰 조회 및 갱신 기능이 필요할 때 | `authTokenProvider: yourAuthTokenProvider` |
 | `NXServerErrorDecoder` | 실패 응답을 도메인 에러로 디코딩할 때 | `serverErrorDecoder: yourServerErrorDecoder` |
 | `NXLogger` | 구조화된 요청 생명주기 로깅이 필요할 때 | `logger: yourLogger` |
-| `NXRawResponse` | `Data`와 `HTTPURLResponse`를 직접 다뤄야 할 때 | `let response = try await client.get("/users").raw()` |
+| `NXRawResponse` | `Data`와 `HTTPURLResponse`를 직접 다뤄야 할 때 | `let response = try await client.get("/users").send()` |
 | `NXError` | 호출 코드에서 Nexa 고유 오류를 처리할 때 | `catch let error as NXError` |
 | `NXHTTPMethod` | `NXEndpoint`의 메서드를 정의할 때 | `var method: NXHTTPMethod { .post }` |
 
@@ -91,7 +92,7 @@ dependencies: [
 
 아래에서 `client`는 이미 설정된 `NXAPIClient`라고 가정합니다.
 
-대부분의 앱 코드에서는 `NXAPIClient`와 `NXTypedRequestBuilder<Response>` 조합을 사용할 수 있습니다.
+대부분의 앱 코드에서는 `NXAPIClient`와 `NXRequestBuilder` 조합을 사용할 수 있습니다.
 
 ```swift
 import Foundation
@@ -103,8 +104,16 @@ struct User: Decodable {
 }
 
 let user = try await client
-    .get("/users/42", as: User.self)
-    .send()
+	.get("/users/42")
+	.send(as: User.self)
+```
+
+대입 대상 타입이 디코딩 문맥을 제공하면 `send()`를 간결하게 유지할 수 있습니다.
+
+```swift
+let user: User = try await client
+	.get("/users/42")
+	.send()
 ```
 
 요청을 직접 확인하거나 원시 응답을 직접 처리할 때는 `NXRequestBuilder`를 사용하면 됩니다.
@@ -114,9 +123,15 @@ import Foundation
 import Nexa
 
 let request = try await client
-    .post("/users")
-    .header("X-Trace-Id", UUID().uuidString)
-    .preparedURLRequest()
+	.post("/users")
+	.header("X-Trace-Id", UUID().uuidString)
+	.preparedURLRequest()
+```
+
+```swift
+let response = try await client
+	.get("/users")
+	.send()
 ```
 
 동일한 엔드포인트 형태가 여러 곳에서 재사용될 때는 `NXEndpoint`를 사용하면 됩니다.
@@ -137,8 +152,8 @@ struct UserEndpoint: NXEndpoint {
     var path: String { "/users/\(identifier)" }
 
     func configure(_ builder: NXTypedRequestBuilder<User>) -> NXTypedRequestBuilder<User> {
-        builder.query("include", "profile")
-    }
+		builder.query("include", "profile")
+	}
 }
 ```
 
@@ -153,57 +168,45 @@ struct UserEndpoint: NXEndpoint {
 ## 요청 흐름
 
 ```mermaid
-sequenceDiagram
-    autonumber
-    participant App
-    participant Config as NXClientConfiguration
-    participant Client as NXAPIClient
-    participant Builder as Builder
-    participant Assembler as NXRequestAssembler
-    participant Chain as NXInterceptorChain
-    participant Transport as NXHTTPTransport
-    participant Pipeline as NXResponsePipeline
+flowchart TB
+    application[소비자 앱] --> client[NXAPIClient]
 
-    App->>Config: 공통 설정 구성
-    App->>Client: NXAPIClient(configuration)
-
-    alt method 기반 호출
-        App->>Client: get/post/put/patch/delete
-        Client->>Builder: NXRequestBuilder or NXTypedRequestBuilder
-    else endpoint 기반 호출
-        App->>Client: request(endpoint) / send(endpoint)
-        Client->>Builder: endpoint.configure(builder)
+    subgraph publicAPI[공개 API]
+        client
+        builder[NXRequestBuilder<br/>NXTypedRequestBuilder]
+        endpoint[NXEndpoint]
+        client --> builder
+        client --> endpoint
+        endpoint --> builder
     end
 
-    App->>Builder: query/header/authorized/retry/validate/intercept...
-
-    alt preparedURLRequest()
-        Builder->>Assembler: assemble()
-        Assembler-->>Builder: URLRequest
-        Builder-->>App: URLRequest
-    else raw()
-        Builder->>Assembler: assemble()
-        Assembler-->>Builder: URLRequest
-        Builder->>Chain: execute(context)
-        Chain->>Transport: send(request)
-        Transport-->>Chain: NXRawResponse
-        Chain-->>Builder: NXRawResponse
-        Builder->>Pipeline: validate()
-        Pipeline-->>Builder: validated
-        Builder-->>App: NXRawResponse
-    else send()
-        Builder->>Assembler: assemble()
-        Assembler-->>Builder: URLRequest
-        Builder->>Chain: execute(context)
-        Chain->>Transport: send(request)
-        Transport-->>Chain: NXRawResponse
-        Chain-->>Builder: NXRawResponse
-        Builder->>Pipeline: validate()
-        Pipeline-->>Builder: validated
-        Builder->>Pipeline: decode()
-        Pipeline-->>Builder: Response
-        Builder-->>App: Response
+    subgraph core[핵심 모델]
+        configuration[NXClientConfiguration]
+        requestSpec[RequestSpec]
+        extensionPoints[확장 지점<br/>전송, 인터셉터, 인증, 로깅, 오류 디코더]
     end
+
+    client --> configuration
+    builder --> requestSpec
+
+    subgraph runtime[실행 계층]
+        assembler[NXRequestAssembler]
+        executor[NXRequestExecutor]
+        interceptors[NXInterceptorChain<br/>재시도, 인증, 로깅, 응답 캐시]
+        transport[NXHTTPTransport]
+        pipeline[NXResponsePipeline]
+    end
+
+    builder --> assembler --> executor
+    configuration --> executor
+    requestSpec --> executor
+    executor --> interceptors --> transport --> pipeline
+    pipeline --> rawResponse[원시 응답<br/>NXRawResponse]
+    pipeline --> decodedResponse[디코딩된 응답<br/>Response]
+
+    extensionPoints -.-> interceptors
+    extensionPoints -.-> transport
+    extensionPoints -.-> pipeline
 ```
 
 ## 빠른 시작
@@ -226,10 +229,10 @@ let client = NXAPIClient(
 )
 
 let user = try await client
-    .get("/users/me", as: User.self)
-    .query("include", "profile")
-    .accept("application/json")
-    .send()
+	.get("/users/me")
+	.query("include", "profile")
+	.accept("application/json")
+	.send(as: User.self)
 ```
 
 `.authorized()`는 클라이언트에 `authTokenProvider`가 설정된 경우에만 추가하세요.
@@ -250,15 +253,15 @@ struct User: Decodable {
 }
 
 let createdUser = try await client
-    .post("/users", as: User.self)
-    .header("X-Trace-Id", UUID().uuidString)
-    .json(CreateUserPayload(name: "opfic"))
-    .send()
+	.post("/users")
+	.header("X-Trace-Id", UUID().uuidString)
+	.json(CreateUserPayload(name: "opfic"))
+	.send(as: User.self)
 ```
 
 ## Endpoint API
 
-Moya 스타일의 엔드포인트 추상화를 선호한다면, `NXEndpoint`를 정의하여 응답 타입을 엔드포인트에 직접 연결할 수 있습니다.
+Moya 스타일의 엔드포인트 추상화를 선호한다면, `NXEndpoint`를 정의하여 응답 타입을 엔드포인트에 직접 연결할 수 있습니다. `NXTypedRequestBuilder` 설정 계약은 소스 호환성을 위해 유지됩니다.
 
 ```swift
 import Foundation
@@ -276,14 +279,27 @@ struct UserEndpoint: NXEndpoint {
     var path: String { "/users/\(identifier)" }
 
     func configure(_ builder: NXTypedRequestBuilder<User>) -> NXTypedRequestBuilder<User> {
-        builder
-            .query("include", "profile")
-            .accept("application/json")
-    }
+		builder
+			.query("include", "profile")
+			.accept("application/json")
+	}
 }
 
 let user = try await client.send(UserEndpoint(identifier: 42))
 ```
+
+## 요청 전환
+
+Nexa 1.3은 기존 요청 API를 유지하면서 `NXRequestBuilder`를 단방향 method 기반 요청 경로로 구성합니다.
+
+| 제거된 호출 | 대체 호출 |
+| --- | --- |
+| `client.get("/users").raw()` | `client.get("/users").send()` |
+| `client.get("/users", as: User.self).raw()` | `client.get("/users").send()` |
+| `client.get("/users").as(User.self).send()` | `client.get("/users").send(as: User.self)` |
+| `client.get("/users", as: User.self).send()` | `client.get("/users").send(as: User.self)` |
+
+Nexa 1.3은 `NXRequestBuilder.raw()`와 `NXTypedRequestBuilder.raw()`를 제거합니다. 기존 `NXEndpoint.configure(_:)`와 `client.send(endpoint)` 계약은 유지하지만 Endpoint 요청에는 원시 응답 실행 API가 없습니다. 원시 응답 처리가 필요하면 `NXRequestBuilder`로 요청을 직접 구성해야 합니다. 이 전환은 빈 바디와 `204` 응답 동작을 변경하지 않습니다.
 
 ## 설정
 
@@ -375,5 +391,5 @@ let client = NXAPIClient(
     )
 )
 
-let user = try await client.get("/users/1", as: User.self).send()
+let user = try await client.get("/users/1").send(as: User.self)
 ```

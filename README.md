@@ -15,6 +15,7 @@ Nexa is a SwiftUI-inspired declarative networking library built on `URLSession`.
 - [Public API](#public-api)
 - [Quick Start](#quick-start)
 - [Endpoint API](#endpoint-api)
+- [Request Migration](#request-migration)
 - [Configuration](#configuration)
 - [Development](#development)
 - [Testing](#testing)
@@ -64,15 +65,15 @@ Then add `Nexa` to your target dependencies:
 
 ## Public API
 
-Most code starts from `NXAPIClient`, then moves into either `NXRequestBuilder` or `NXTypedRequestBuilder<Response>`. 
+Most code starts from `NXAPIClient`, then moves into one `NXRequestBuilder` request path. Use `send()` for `NXRawResponse`, `send(as:)` for an explicit decoded type, or contextual `send()` when the assignment supplies the decoded type.
 
 The rest of the public surface is made of extension points for auth, logging, testing, retry, validation, and custom error mapping.
 
 | API | When to use it | Example |
 | --- | --- | --- |
-| `NXAPIClient` | Main entry point for requests that share one `baseURL` and one configuration | `client.get("/users", as: User.self).send()` |
-| `NXRequestBuilder` | When you want to inspect the assembled `URLRequest` or receive `NXRawResponse` without decoding | `try await client.get("/users").raw()` |
-| `NXTypedRequestBuilder<Response>` | When the response should decode directly into a `Decodable` type | `try await client.get("/users/1", as: User.self).send()` |
+| `NXAPIClient` | Main entry point for requests that share one `baseURL` and one configuration | `client.get("/users").send(as: User.self)` |
+| `NXRequestBuilder` | When you need a prepared `URLRequest`, `NXRawResponse`, or a decoded `Decodable` response | `try await client.get("/users").send()` |
+| `NXTypedRequestBuilder<Response>` | Endpoint configuration compatibility boundary | `func configure(_ builder: NXTypedRequestBuilder<User>) -> NXTypedRequestBuilder<User>` |
 | `NXEndpoint` | When an endpoint definition should be reusable and carry its response type with it | `try await client.send(UserEndpoint(identifier: 1))` |
 | `NXClientConfiguration` | When shared headers, transport, logger, auth, encoder, decoder, or interceptors should be configured once | `NXClientConfiguration(baseURL: url, authTokenProvider: yourAuthTokenProvider)` |
 | `NXCache` | When successful unauthenticated `GET` responses should be reused for a short TTL | `NXClientConfiguration(baseURL: url, cache: .memory(ttl: 0.3))` |
@@ -83,7 +84,7 @@ The rest of the public surface is made of extension points for auth, logging, te
 | `NXAuthTokenProvider` | When `.authorized()` requests need token lookup and refresh support | `authTokenProvider: yourAuthTokenProvider` |
 | `NXServerErrorDecoder` | When failed responses should decode into your own domain error | `serverErrorDecoder: yourServerErrorDecoder` |
 | `NXLogger` | When you want structured request lifecycle logging | `logger: yourLogger` |
-| `NXRawResponse` | When you need both `Data` and `HTTPURLResponse` directly | `let response = try await client.get("/users").raw()` |
+| `NXRawResponse` | When you need both `Data` and `HTTPURLResponse` directly | `let response = try await client.get("/users").send()` |
 | `NXError` | When handling Nexa-specific failures in calling code | `catch let error as NXError` |
 | `NXHTTPMethod` | When defining an `NXEndpoint` method | `var method: NXHTTPMethod { .post }` |
 
@@ -91,7 +92,7 @@ The rest of the public surface is made of extension points for auth, logging, te
 
 Assume `client` below is an `NXAPIClient` that has already been configured.
 
-Use `NXAPIClient` + `NXTypedRequestBuilder<Response>` for most application code:
+Use `NXAPIClient` + `NXRequestBuilder` for most application code:
 
 ```swift
 import Foundation
@@ -103,8 +104,16 @@ struct User: Decodable {
 }
 
 let user = try await client
-    .get("/users/42", as: User.self)
-    .send()
+	.get("/users/42")
+	.send(as: User.self)
+```
+
+When the destination type supplies the decoding context, `send()` can remain concise:
+
+```swift
+let user: User = try await client
+	.get("/users/42")
+	.send()
 ```
 
 Use `NXRequestBuilder` when you want to inspect the request or handle the raw response yourself:
@@ -114,9 +123,15 @@ import Foundation
 import Nexa
 
 let request = try await client
-    .post("/users")
-    .header("X-Trace-Id", UUID().uuidString)
-    .preparedURLRequest()
+	.post("/users")
+	.header("X-Trace-Id", UUID().uuidString)
+	.preparedURLRequest()
+```
+
+```swift
+let response = try await client
+	.get("/users")
+	.send()
 ```
 
 Use `NXEndpoint` when the same endpoint shape is reused in several places:
@@ -137,8 +152,8 @@ struct UserEndpoint: NXEndpoint {
     var path: String { "/users/\(identifier)" }
 
     func configure(_ builder: NXTypedRequestBuilder<User>) -> NXTypedRequestBuilder<User> {
-        builder.query("include", "profile")
-    }
+		builder.query("include", "profile")
+	}
 }
 ```
 
@@ -153,57 +168,45 @@ Use the lower-level protocols only when the default behavior is not enough:
 ## Request Flow
 
 ```mermaid
-sequenceDiagram
-    autonumber
-    participant App
-    participant Config as NXClientConfiguration
-    participant Client as NXAPIClient
-    participant Builder as Builder
-    participant Assembler as NXRequestAssembler
-    participant Chain as NXInterceptorChain
-    participant Transport as NXHTTPTransport
-    participant Pipeline as NXResponsePipeline
+flowchart TB
+    application[Application] --> client[NXAPIClient]
 
-    App->>Config: 공통 설정 구성
-    App->>Client: NXAPIClient(configuration)
-
-    alt method 기반 호출
-        App->>Client: get/post/put/patch/delete
-        Client->>Builder: NXRequestBuilder or NXTypedRequestBuilder
-    else endpoint 기반 호출
-        App->>Client: request(endpoint) / send(endpoint)
-        Client->>Builder: endpoint.configure(builder)
+    subgraph publicAPI[Public API]
+        client
+        builder[NXRequestBuilder<br/>NXTypedRequestBuilder]
+        endpoint[NXEndpoint]
+        client --> builder
+        client --> endpoint
+        endpoint --> builder
     end
 
-    App->>Builder: query/header/authorized/retry/validate/intercept...
-
-    alt preparedURLRequest()
-        Builder->>Assembler: assemble()
-        Assembler-->>Builder: URLRequest
-        Builder-->>App: URLRequest
-    else raw()
-        Builder->>Assembler: assemble()
-        Assembler-->>Builder: URLRequest
-        Builder->>Chain: execute(context)
-        Chain->>Transport: send(request)
-        Transport-->>Chain: NXRawResponse
-        Chain-->>Builder: NXRawResponse
-        Builder->>Pipeline: validate()
-        Pipeline-->>Builder: validated
-        Builder-->>App: NXRawResponse
-    else send()
-        Builder->>Assembler: assemble()
-        Assembler-->>Builder: URLRequest
-        Builder->>Chain: execute(context)
-        Chain->>Transport: send(request)
-        Transport-->>Chain: NXRawResponse
-        Chain-->>Builder: NXRawResponse
-        Builder->>Pipeline: validate()
-        Pipeline-->>Builder: validated
-        Builder->>Pipeline: decode()
-        Pipeline-->>Builder: Response
-        Builder-->>App: Response
+    subgraph core[Core Model]
+        configuration[NXClientConfiguration]
+        requestSpec[RequestSpec]
+        extensionPoints[Extension Points<br/>transport, interceptor, auth, logger, error decoder]
     end
+
+    client --> configuration
+    builder --> requestSpec
+
+    subgraph runtime[Execution Layer]
+        assembler[NXRequestAssembler]
+        executor[NXRequestExecutor]
+        interceptors[NXInterceptorChain<br/>retry, auth, logging, cache]
+        transport[NXHTTPTransport]
+        pipeline[NXResponsePipeline]
+    end
+
+    builder --> assembler --> executor
+    configuration --> executor
+    requestSpec --> executor
+    executor --> interceptors --> transport --> pipeline
+    pipeline --> rawResponse[Raw Response<br/>NXRawResponse]
+    pipeline --> decodedResponse[Decoded Response<br/>Response]
+
+    extensionPoints -.-> interceptors
+    extensionPoints -.-> transport
+    extensionPoints -.-> pipeline
 ```
 
 ## Quick Start
@@ -226,10 +229,10 @@ let client = NXAPIClient(
 )
 
 let user = try await client
-    .get("/users/me", as: User.self)
-    .query("include", "profile")
-    .accept("application/json")
-    .send()
+	.get("/users/me")
+	.query("include", "profile")
+	.accept("application/json")
+	.send(as: User.self)
 ```
 
 Add `.authorized()` only when the client has an `authTokenProvider`.
@@ -250,15 +253,15 @@ struct User: Decodable {
 }
 
 let createdUser = try await client
-    .post("/users", as: User.self)
-    .header("X-Trace-Id", UUID().uuidString)
-    .json(CreateUserPayload(name: "opfic"))
-    .send()
+	.post("/users")
+	.header("X-Trace-Id", UUID().uuidString)
+	.json(CreateUserPayload(name: "opfic"))
+	.send(as: User.self)
 ```
 
 ## Endpoint API
 
-If you prefer a Moya-style endpoint abstraction, define an `NXEndpoint` and let Nexa keep the response type attached to the endpoint itself.
+If you prefer a Moya-style endpoint abstraction, define an `NXEndpoint` and let Nexa keep the response type attached to the endpoint itself. Its `NXTypedRequestBuilder` configuration contract remains available for source compatibility.
 
 ```swift
 import Foundation
@@ -276,14 +279,27 @@ struct UserEndpoint: NXEndpoint {
     var path: String { "/users/\(identifier)" }
 
     func configure(_ builder: NXTypedRequestBuilder<User>) -> NXTypedRequestBuilder<User> {
-        builder
-            .query("include", "profile")
-            .accept("application/json")
-    }
+		builder
+			.query("include", "profile")
+			.accept("application/json")
+	}
 }
 
 let user = try await client.send(UserEndpoint(identifier: 42))
 ```
+
+## Request Migration
+
+Nexa 1.3 keeps the existing request APIs available while establishing `NXRequestBuilder` as the one-way method-based request path.
+
+| Removed call | Replacement |
+| --- | --- |
+| `client.get("/users").raw()` | `client.get("/users").send()` |
+| `client.get("/users", as: User.self).raw()` | `client.get("/users").send()` |
+| `client.get("/users").as(User.self).send()` | `client.get("/users").send(as: User.self)` |
+| `client.get("/users", as: User.self).send()` | `client.get("/users").send(as: User.self)` |
+
+Nexa 1.3 removes `NXRequestBuilder.raw()` and `NXTypedRequestBuilder.raw()`. The existing `NXEndpoint.configure(_:)` and `client.send(endpoint)` contracts remain unchanged, but Endpoint requests do not provide a raw-response execution API. Construct a direct `NXRequestBuilder` request when raw response handling is required. This migration does not change empty-body or `204` response behavior.
 
 ## Configuration
 
@@ -375,5 +391,5 @@ let client = NXAPIClient(
     )
 )
 
-let user = try await client.get("/users/1", as: User.self).send()
+let user = try await client.get("/users/1").send(as: User.self)
 ```

@@ -26,7 +26,7 @@ struct NXResponseCacheInterceptorTests {
         let users = try await withThrowingTaskGroup(of: UserDTO.self) { group in
             for _ in 0..<5 {
                 group.addTask {
-                    try await client.get("/users", as: UserDTO.self).send()
+                    try await client.get("/users").send(as: UserDTO.self)
                 }
             }
 
@@ -56,8 +56,8 @@ struct NXResponseCacheInterceptorTests {
             cache: .memory(ttl: 10)
         )
 
-        let firstUser = try await client.get("/users", as: UserDTO.self).send()
-        let secondUser = try await client.get("/users", as: UserDTO.self).send()
+        let firstUser = try await client.get("/users").send(as: UserDTO.self)
+        let secondUser = try await client.get("/users").send(as: UserDTO.self)
 
         #expect(firstUser == UserDTO(id: 1, name: "cached"))
         #expect(secondUser == firstUser)
@@ -79,12 +79,12 @@ struct NXResponseCacheInterceptorTests {
         )
 
         let firstTask = Task {
-            try await client.get("/users", as: UserDTO.self).send()
+            try await client.get("/users").send(as: UserDTO.self)
         }
         await requestStartProbe.waitForStart()
         firstTask.cancel()
 
-        let secondUser = try await client.get("/users", as: UserDTO.self).send()
+        let secondUser = try await client.get("/users").send(as: UserDTO.self)
         _ = try? await firstTask.value
 
         #expect(secondUser == UserDTO(id: 1, name: "cached"))
@@ -106,9 +106,9 @@ struct NXResponseCacheInterceptorTests {
             cache: .memory(ttl: 0.01)
         )
 
-        let firstUser = try await client.get("/users", as: UserDTO.self).send()
+        let firstUser = try await client.get("/users").send(as: UserDTO.self)
         try await Task.sleep(nanoseconds: 20_000_000)
-        let secondUser = try await client.get("/users", as: UserDTO.self).send()
+        let secondUser = try await client.get("/users").send(as: UserDTO.self)
 
         #expect(firstUser == UserDTO(id: 1, name: "cached"))
         #expect(secondUser == UserDTO(id: 2, name: "cached"))
@@ -135,11 +135,11 @@ struct NXResponseCacheInterceptorTests {
             cache: .memory(ttl: 0.01)
         )
 
-        let firstUser = try await client.get("/users", as: UserDTO.self).send()
+        let firstUser = try await client.get("/users").send(as: UserDTO.self)
         try await Task.sleep(nanoseconds: 20_000_000)
 
         await #expect {
-            let _: UserDTO = try await client.get("/users", as: UserDTO.self).send()
+            let _: UserDTO = try await client.get("/users").send(as: UserDTO.self)
         } throws: { error in
             guard case NXError.timeout = error else {
                 return false
@@ -166,8 +166,8 @@ struct NXResponseCacheInterceptorTests {
             cache: .memory(ttl: 10)
         )
 
-        let firstUser = try await client.post("/users", as: UserDTO.self).send()
-        let secondUser = try await client.post("/users", as: UserDTO.self).send()
+        let firstUser = try await client.post("/users").send(as: UserDTO.self)
+        let secondUser = try await client.post("/users").send(as: UserDTO.self)
 
         #expect(firstUser == UserDTO(id: 1, name: "posted"))
         #expect(secondUser == UserDTO(id: 2, name: "posted"))
