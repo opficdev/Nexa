@@ -48,6 +48,20 @@ let response = try await client
 	.send()
 ```
 
+## Retry Policy
+
+``NXRetryPolicy`` retries `GET`, `HEAD`, `PUT`, `DELETE`, and `OPTIONS` by default when a configured status code or a retryable transport error occurs. Add `POST` or `PATCH` to `retryableMethods` only when the server can safely receive the same request more than once.
+
+For `429` and `503`, a valid `Retry-After` response header takes precedence over local backoff. Nexa accepts delay seconds and HTTP-date values, limits the result with `maximumServerDelay`, and records the selected delay through ``NXRetryLog``. Local ``NXRetryPolicy/Jitter`` does not change a server-provided delay.
+
+```swift
+let policy = NXRetryPolicy(
+	maxAttempts: 3,
+	retryableMethods: [.get, .post],
+	maximumServerDelay: 30
+)
+```
+
 ## Migration
 
 Nexa 1.3 removes `NXRequestBuilder.raw()` and `NXTypedRequestBuilder.raw()`. Use `NXRequestBuilder.send()` for a raw response.
