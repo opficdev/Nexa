@@ -11,7 +11,7 @@ import Foundation
 ///
 /// ## Overview
 ///
-/// Use `NXTypedRequestBuilder` for most application code that should decode directly into a `Decodable` model.
+/// `NXTypedRequestBuilder` is retained for `NXEndpoint` configuration compatibility. For method-based requests, use `NXRequestBuilder.send(as:)`.
 ///
 /// ```swift
 /// import Foundation
@@ -23,10 +23,10 @@ import Foundation
 /// }
 ///
 /// let user = try await client
-///     .get("/users/me", as: User.self)
-///     .query("include", "profile")
-///     .accept("application/json")
-///     .send()
+/// \t.get("/users/me")
+/// \t.query("include", "profile")
+/// \t.accept("application/json")
+/// \t.send(as: User.self)
 /// ```
 public struct NXTypedRequestBuilder<Response>: Sendable where Response: Decodable {
     let requestBuilder: NXRequestBuilder

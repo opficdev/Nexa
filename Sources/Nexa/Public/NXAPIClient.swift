@@ -29,11 +29,11 @@ import Foundation
 /// )
 ///
 /// let user = try await client
-///     .get("/users/me", as: User.self)
-///     .send()
+/// \t.get("/users/me")
+/// \t.send(as: User.self)
 /// ```
 ///
-/// Use the untyped overloads when you need a prepared `URLRequest` or `NXRawResponse`.
+/// Use the method-based builders for every direct request. `NXEndpoint` retains its typed builder configuration contract for source compatibility.
 public struct NXAPIClient: Sendable {
     private let configuration: NXClientConfiguration
     private let responseCacheStore: NXResponseCacheStore?

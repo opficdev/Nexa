@@ -7,11 +7,11 @@
 
 import Foundation
 
-/// Value-semantic builder for configuring and sending raw HTTP requests.
+/// Value-semantic builder for configuring and sending HTTP requests.
 ///
 /// ## Overview
 ///
-/// Use `NXRequestBuilder` when you want to inspect the prepared request or handle the raw response yourself.
+/// Use `NXRequestBuilder` to inspect the prepared request, receive an `NXRawResponse` with `send()`, or decode a response with `send(as:)`.
 ///
 /// ```swift
 /// import Foundation
@@ -28,9 +28,9 @@ import Foundation
 /// import Nexa
 ///
 /// let response = try await client
-///     .get("/users")
-///     .accept("application/json")
-///     .raw()
+/// \t.get("/users")
+/// \t.accept("application/json")
+/// \t.send()
 /// ```
 public struct NXRequestBuilder: Sendable {
     private let clientConfiguration: NXClientConfiguration
