@@ -17,6 +17,7 @@ Nexa는 `URLSession` 기반의 SwiftUI 스타일 선언형 네트워킹 라이�
 - [Endpoint API](#endpoint-api)
 - [요청 전환](#요청-전환)
 - [설정](#설정)
+- [재시도 정책](#재시도-정책)
 - [개발](#개발)
 - [테스트](#테스트)
 
@@ -342,6 +343,26 @@ let client = NXAPIClient(configuration: configuration)
 - `.authorized()` 요청에 대한 자동 인증 헤더 주입
 - 토큰 갱신 및 재시도 처리
 - 스터빙 및 격리 테스트를 위한 커스텀 transport
+
+## 재시도 정책
+
+`NXRetryPolicy`는 설정한 재시도 상태 코드 또는 전송 오류가 발생하면 기본으로 `GET`, `HEAD`, `PUT`, `DELETE`, `OPTIONS`를 재시도합니다. 같은 요청을 반복해도 안전하게 처리하는 엔드포인트일 때만 `POST`, `PATCH`를 `retryableMethods`에 명시적으로 추가할 수 있습니다.
+
+재시도 가능한 `429`, `503` 응답에서는 `Retry-After`의 초 단위와 HTTP-date 값을 처리합니다. 유효한 서버 값은 local backoff를 대체하고 기본 60초인 `maximumServerDelay`로 제한되며 `NXRetryLog`에 기록됩니다. `Jitter.full`은 local backoff에만 적용되고 서버가 지정한 지연을 줄이지 않습니다.
+
+```swift
+let retryPolicy = NXRetryPolicy(
+	maxAttempts: 3,
+	retryableMethods: [.get, .post],
+	maximumServerDelay: 30,
+	jitter: .none
+)
+
+let user = try await client
+	.post("/users")
+	.retry(retryPolicy)
+	.send(as: User.self)
+```
 
 ## 개발
 

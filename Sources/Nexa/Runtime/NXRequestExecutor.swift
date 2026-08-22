@@ -11,7 +11,8 @@ enum NXRequestExecutor {
     static func executeRaw(
         clientConfiguration: NXClientConfiguration,
         responseCacheStore: NXResponseCacheStore?,
-        requestSpec: RequestSpec
+        requestSpec: RequestSpec,
+        retryExecutionDependencies: NXRetryExecutionDependencies = .live
     ) async throws -> NXRawResponse {
         do {
             let request = try NXRequestAssembler.assemble(
@@ -31,7 +32,8 @@ enum NXRequestExecutor {
                 interceptors: runtimeInterceptors(
                     clientConfiguration: clientConfiguration,
                     responseCacheStore: responseCacheStore,
-                    requestSpec: requestSpec
+                    requestSpec: requestSpec,
+                    retryExecutionDependencies: retryExecutionDependencies
                 ),
                 transport: clientConfiguration.transport
             )
@@ -74,10 +76,11 @@ enum NXRequestExecutor {
     private static func runtimeInterceptors(
         clientConfiguration: NXClientConfiguration,
         responseCacheStore: NXResponseCacheStore?,
-        requestSpec: RequestSpec
+        requestSpec: RequestSpec,
+        retryExecutionDependencies: NXRetryExecutionDependencies
     ) -> [any NXHTTPInterceptor] {
         var interceptors: [any NXHTTPInterceptor] = [
-            NXRetryInterceptor(),
+            NXRetryInterceptor(dependencies: retryExecutionDependencies),
             NXAuthInterceptor()
         ]
         interceptors.append(contentsOf: clientConfiguration.interceptors)

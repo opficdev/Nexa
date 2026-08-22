@@ -17,6 +17,7 @@ Nexa is a SwiftUI-inspired declarative networking library built on `URLSession`.
 - [Endpoint API](#endpoint-api)
 - [Request Migration](#request-migration)
 - [Configuration](#configuration)
+- [Retry Policy](#retry-policy)
 - [Development](#development)
 - [Testing](#testing)
 
@@ -342,6 +343,26 @@ Nexa currently supports:
 - Automatic auth header injection for `authorized()` requests
 - Token refresh and retry handling
 - Custom transports for stubbing and isolated tests
+
+## Retry Policy
+
+`NXRetryPolicy` retries `GET`, `HEAD`, `PUT`, `DELETE`, and `OPTIONS` by default when a configured retryable status code or transport error occurs. `POST` and `PATCH` remain single-attempt requests unless you explicitly add them to `retryableMethods` for an endpoint that safely accepts repeated requests.
+
+For retryable `429` and `503` responses, Nexa accepts `Retry-After` delay seconds and HTTP-date values. A valid server value replaces local backoff, is capped by `maximumServerDelay` (60 seconds by default), and is recorded through `NXRetryLog`. `Jitter.full` changes only local backoff delays and never shortens a server-provided delay.
+
+```swift
+let retryPolicy = NXRetryPolicy(
+	maxAttempts: 3,
+	retryableMethods: [.get, .post],
+	maximumServerDelay: 30,
+	jitter: .none
+)
+
+let user = try await client
+	.post("/users")
+	.retry(retryPolicy)
+	.send(as: User.self)
+```
 
 ## Development
 
