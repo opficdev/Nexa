@@ -23,10 +23,10 @@ import Foundation
 /// }
 ///
 /// let user = try await client
-/// \t.get("/users/me")
-/// \t.query("include", "profile")
-/// \t.accept("application/json")
-/// \t.send(as: User.self)
+///     .get("/users/me")
+///     .query("include", "profile")
+///     .accept("application/json")
+///     .send(as: User.self)
 /// ```
 public struct NXTypedRequestBuilder<Response>: Sendable where Response: Decodable {
     let requestBuilder: NXRequestBuilder

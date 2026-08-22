@@ -28,9 +28,9 @@ import Foundation
 /// import Nexa
 ///
 /// let response = try await client
-/// \t.get("/users")
-/// \t.accept("application/json")
-/// \t.send()
+///     .get("/users")
+///     .accept("application/json")
+///     .send()
 /// ```
 public struct NXRequestBuilder: Sendable {
     private let clientConfiguration: NXClientConfiguration

@@ -29,8 +29,8 @@ import Foundation
 /// )
 ///
 /// let user = try await client
-/// \t.get("/users/me")
-/// \t.send(as: User.self)
+///     .get("/users/me")
+///     .send(as: User.self)
 /// ```
 ///
 /// Use the method-based builders for every direct request. `NXEndpoint` retains its typed builder configuration contract for source compatibility.
