@@ -60,6 +60,17 @@ struct NXCoreModelPolicyTests {
         #expect(exponentialDelay.delay(forAttempt: 4) == 2.0)
     }
 
+    @Test("재시도 정책이 멱등 method와 서버 지연 기본값을 제공한다")
+    func retryPolicyDefaultRetrySemantics() {
+        let defaultRetryPolicy = NXRetryPolicy(maxAttempts: 2)
+        let retryPolicy = NXRetryPolicy(maxAttempts: 2, maximumServerDelay: -1)
+
+        #expect(defaultRetryPolicy.retryableMethods == [.get, .head, .put, .delete, .options])
+        #expect(defaultRetryPolicy.maximumServerDelay == 60)
+        #expect(defaultRetryPolicy.jitter == .none)
+        #expect(retryPolicy.maximumServerDelay == 0)
+    }
+
     @Test("응답 검증 정책이 상태코드 허용 규칙을 적용한다")
     func validationPolicyAllowsExpectedStatusCodes() {
         #expect(NXValidationPolicy.none.allows(statusCode: 404) == true)
@@ -95,7 +106,10 @@ struct NXCoreModelPolicyTests {
         }
         #expect(capturedError.code == .timedOut)
 
-        guard case let .invalidStatus(statusCode, data) = NXError.invalidStatus(statusCode: 500, data: Data("x".utf8)) else {
+        guard case let .invalidStatus(statusCode, data) = NXError.invalidStatus(
+            statusCode: 500,
+            data: Data("x".utf8)
+        ) else {
             Issue.record("invalidStatus case mapping failed")
             return
         }
