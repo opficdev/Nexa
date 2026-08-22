@@ -34,23 +34,23 @@
 - [x] `client.get(path).send()`가 타입 문맥 없이 `NXRawResponse` 반환
 - [x] `let value: Response = try await client.get(path).send()`가 `Response` 디코딩
 - [x] `client.get(path).send(as: Response.self)`가 `Response` 디코딩
-- [ ] `Sources/Nexa/Public`에 `public func raw()` 선언 없음
-- [ ] `Tests/NexaTests`에 `.raw()` 실행 호출 없음
+- [x] `Sources/Nexa/Public`에 `public func raw()` 선언 없음
+- [x] `Tests/NexaTests`에 `.raw()` 실행 호출 없음
 - [x] `as(_:)`, typed HTTP method overload에 사용 중단 표시와 대체 경로 안내
 - [x] `NXTypedRequestBuilder<Response>` 타입의 사용 중단 표시 없음
 - [x] `NXEndpoint.configure(_:)`, `client.request(_:)`, `client.send(_:)` 호환 동작 보존
 - [x] transport 대체, retry, 인증, cache, validation, interceptor, 오류 매핑, cancellation 동작 보존
 - [x] `README.md`, `README.ko.md`, DocC의 정식 경로와 migration 안내 갱신
-- [ ] 공개 문서에 `raw()` 제거와 Endpoint 원시 응답 제한 명시
+- [x] 공개 문서에 `raw()` 제거와 Endpoint 원시 응답 제한 명시
 
 ## Verification
 
 - Command: `swift build`
-- Evidence: 2026-08-22 exit status `0`
+- Evidence: 2026-08-22 raw 응답 API 제거 후 exit status `0`
 - Command: `swift test`
 - Evidence: 2026-08-22 43개 테스트 통과
 - Command: 변경 Swift 파일 SwiftLint
-- Evidence: 2026-08-22 변경 Swift 파일 3개에서 위반 0건
+- Evidence: 2026-08-22 변경 Swift 파일 2개에서 위반 0건
 - Command: `git diff --check`
 - Evidence: 2026-08-22 공백 오류 없음
 

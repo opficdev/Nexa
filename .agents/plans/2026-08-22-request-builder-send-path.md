@@ -91,7 +91,7 @@
 - Modify: `.agents/plans/2026-08-22-request-builder-send-path.md`
 
 - [x] 1.3 source compatibility 요구를 `raw()` 공개 API 제거 요구로 대체
-- [ ] `docs: raw 응답 API 제거 요구사항 갱신` commit
+- [x] `docs: raw 응답 API 제거 요구사항 갱신` commit
 
 ### Task 5: raw 응답 API 제거
 
@@ -101,10 +101,10 @@
 - Modify: `Sources/Nexa/Public/NXTypedRequestBuilder.swift`
 - Modify: `Tests/NexaTests/NXRequestBodyExecutionAPITests.swift`
 
-- [ ] 두 `public func raw()` 선언 제거
-- [ ] `.raw()` 실행 호출 제거와 `send()` 원시 응답 검증 유지
-- [ ] `rg -n 'public func raw\\(' Sources/Nexa/Public`와 `rg -n '\\.raw\\(' Tests/NexaTests` 결과 없음 확인
-- [ ] `refactor: raw 응답 API 제거` commit
+- [x] 두 `public func raw()` 선언 제거
+- [x] `.raw()` 실행 호출 제거와 `send()` 원시 응답 검증 유지
+- [x] `rg -n 'public func raw\\(' Sources/Nexa/Public`와 `rg -n '\\.raw\\(' Tests/NexaTests` 결과 없음 확인
+- [x] `refactor: raw 응답 API 제거` commit
 
 ### Task 6: raw 응답 전환 문서
 
@@ -116,7 +116,7 @@
 - Modify: `README.md`
 - Modify: `README.ko.md`
 
-- [ ] `raw()` 제거와 `send()` 원시 응답 경로 안내
-- [ ] Endpoint 원시 응답 직접 대체 경로 없음 명시
-- [ ] `swift build`, `swift test`, 변경 Swift 파일 SwiftLint, `git diff --check` 실행
+- [x] `raw()` 제거와 `send()` 원시 응답 경로 안내
+- [x] Endpoint 원시 응답 직접 대체 경로 없음 명시
+- [x] `swift build`, `swift test`, 변경 Swift 파일 SwiftLint, `git diff --check` 실행
 - [ ] `docs: raw 응답 전환 안내 갱신` commit

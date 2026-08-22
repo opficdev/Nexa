@@ -304,13 +304,14 @@ let user = try await client.send(UserEndpoint(identifier: 42))
 
 Nexa 1.3은 기존 요청 API를 유지하면서 `NXRequestBuilder`를 단방향 method 기반 요청 경로로 구성합니다.
 
-| 기존 호출 | 권장 호출 |
+| 제거된 호출 | 대체 호출 |
 | --- | --- |
 | `client.get("/users").raw()` | `client.get("/users").send()` |
+| `client.get("/users", as: User.self).raw()` | `client.get("/users").send()` |
 | `client.get("/users").as(User.self).send()` | `client.get("/users").send(as: User.self)` |
 | `client.get("/users", as: User.self).send()` | `client.get("/users").send(as: User.self)` |
 
-기존 `NXEndpoint.configure(_:)`와 `client.send(endpoint)` 계약은 변경하지 않습니다. 이 전환은 빈 바디와 `204` 응답 동작을 변경하지 않습니다.
+Nexa 1.3은 `NXRequestBuilder.raw()`와 `NXTypedRequestBuilder.raw()`를 제거합니다. 기존 `NXEndpoint.configure(_:)`와 `client.send(endpoint)` 계약은 유지하지만 Endpoint 요청에는 원시 응답 실행 API가 없습니다. 원시 응답 처리가 필요하면 `NXRequestBuilder`로 요청을 직접 구성해야 합니다. 이 전환은 빈 바디와 `204` 응답 동작을 변경하지 않습니다.
 
 ## 설정
 

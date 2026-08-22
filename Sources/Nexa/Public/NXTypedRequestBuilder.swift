@@ -11,7 +11,7 @@ import Foundation
 ///
 /// ## Overview
 ///
-/// `NXTypedRequestBuilder` is retained for `NXEndpoint` configuration compatibility. For method-based requests, use `NXRequestBuilder.send(as:)`.
+/// `NXTypedRequestBuilder` is retained for `NXEndpoint` configuration compatibility. It does not provide raw-response execution. For method-based requests, use `NXRequestBuilder.send(as:)`.
 ///
 /// ```swift
 /// import Foundation

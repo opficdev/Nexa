@@ -304,13 +304,14 @@ let user = try await client.send(UserEndpoint(identifier: 42))
 
 Nexa 1.3 keeps the existing request APIs available while establishing `NXRequestBuilder` as the one-way method-based request path.
 
-| Existing call | Preferred call |
+| Removed call | Replacement |
 | --- | --- |
 | `client.get("/users").raw()` | `client.get("/users").send()` |
+| `client.get("/users", as: User.self).raw()` | `client.get("/users").send()` |
 | `client.get("/users").as(User.self).send()` | `client.get("/users").send(as: User.self)` |
 | `client.get("/users", as: User.self).send()` | `client.get("/users").send(as: User.self)` |
 
-The existing `NXEndpoint.configure(_:)` and `client.send(endpoint)` contracts remain unchanged. This migration does not change empty-body or `204` response behavior.
+Nexa 1.3 removes `NXRequestBuilder.raw()` and `NXTypedRequestBuilder.raw()`. The existing `NXEndpoint.configure(_:)` and `client.send(endpoint)` contracts remain unchanged, but Endpoint requests do not provide a raw-response execution API. Construct a direct `NXRequestBuilder` request when raw response handling is required. This migration does not change empty-body or `204` response behavior.
 
 ## Configuration
 

@@ -48,6 +48,12 @@ let response = try await client
 	.send()
 ```
 
+## Migration
+
+Nexa 1.3 removes `NXRequestBuilder.raw()` and `NXTypedRequestBuilder.raw()`. Use `NXRequestBuilder.send()` for a raw response.
+
+`NXEndpoint` retains its typed configuration and decoded `client.send(_:)` path. It does not provide a raw-response execution API; construct the required request directly with `NXRequestBuilder` when raw response handling is required.
+
 ## Reusable Endpoints
 
 ```swift

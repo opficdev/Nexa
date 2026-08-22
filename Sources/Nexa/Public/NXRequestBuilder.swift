@@ -11,7 +11,7 @@ import Foundation
 ///
 /// ## Overview
 ///
-/// Use `NXRequestBuilder` to inspect the prepared request, receive an `NXRawResponse` with `send()`, or decode a response with `send(as:)`.
+/// Use `NXRequestBuilder` to inspect the prepared request, receive an `NXRawResponse` with `send()`, or decode a response with `send(as:)`. `send()` is the only raw-response execution API.
 ///
 /// ```swift
 /// import Foundation
