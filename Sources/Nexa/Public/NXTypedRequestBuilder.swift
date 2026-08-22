@@ -143,7 +143,6 @@ public struct NXTypedRequestBuilder<Response>: Sendable where Response: Decodabl
     ///
     /// - Returns: Decoded response value.
     /// - Throws: `NXError` if the request fails or decoding fails.
-    @available(*, deprecated, message: "Use NXRequestBuilder.send(as:).")
     public func send() async throws -> Response {
         try await requestBuilder.send(as: Response.self)
     }

@@ -150,6 +150,24 @@ struct NXInterceptorChainTests {
         #expect(user == UserDTO(id: 42, name: "endpoint"))
     }
 
+    @Test("Endpoint builder send는 추가 구성과 응답 디코딩을 유지한다")
+    func endpointBuilderSendPreservesConfigurationAndDecodesResponse() async throws {
+        let client = makeClient(
+            transport: ClosureTransport { request in
+                #expect(request.url?.absoluteString == "https://example.com/users/42?include=profile")
+                #expect(request.value(forHTTPHeaderField: "X-Request-Source") == "endpoint")
+                return makeRawResponse(statusCode: 200, body: #"{"id":42,"name":"endpoint"}"#, path: "/users/42")
+            }
+        )
+
+        let user = try await client
+            .request(UserEndpoint(identifier: 42))
+            .header("X-Request-Source", "endpoint")
+            .send()
+
+        #expect(user == UserDTO(id: 42, name: "endpoint"))
+    }
+
     private func makeClient(
         transport: any NXHTTPTransport,
         logger: any NXLogger = NXNoopLogger(),
