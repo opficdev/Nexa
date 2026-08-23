@@ -17,10 +17,14 @@ let package = Package(
     ],
     dependencies: [],
     targets: [
-        .target(name: "Nexa"),
+        .target(
+            name: "Nexa",
+            path: "Sources"
+        ),
         .testTarget(
             name: "NexaTests",
-            dependencies: ["Nexa"]
+            dependencies: ["Nexa"],
+            path: "Tests"
         ),
     ],
     swiftLanguageModes: [.v6]

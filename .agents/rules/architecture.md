@@ -8,10 +8,10 @@ Nexa as Swift Package networking library. Public API stability, request behavior
 
 | Area | Owner | Responsibility |
 | --- | --- | --- |
-| `Sources/Nexa/Public` | Public API | Consumer-facing request builders, client, endpoint, and extension protocols |
-| `Sources/Nexa/Core` | Core model | Request configuration, request model, policy, error, logging, and protocol contracts |
-| `Sources/Nexa/Runtime` | Runtime | Request assembly, execution, transport, interceptor chain, retry, authentication, cache, and response pipeline |
-| `Tests/NexaTests` | Test suite | Observable public behavior and runtime boundary verification |
+| `Sources/Public` | Public API | Consumer-facing request builders, client, endpoint, and extension protocols |
+| `Sources/Core` | Core model | Request configuration, request model, policy, error, logging, and protocol contracts |
+| `Sources/Runtime` | Runtime | Request assembly, execution, transport, interceptor chain, retry, authentication, cache, and response pipeline |
+| `Tests` | Test suite | Observable public behavior and runtime boundary verification |
 | `Package.swift` | Package manifest | Platform floor, product, target, test target, and package dependency declarations |
 
 ## Public API rules
