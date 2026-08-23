@@ -25,6 +25,7 @@ struct NXResponseCacheRevalidationTests {
                         path: "/users",
                         headers: [
                             "ETag": "v1",
+                            "X-Revalidated": "old",
                             "Content-Length": "24"
                         ]
                     )
@@ -37,7 +38,7 @@ struct NXResponseCacheRevalidationTests {
                     path: "/users",
                     headers: [
                         "ETag": "v1",
-                        "X-Revalidated": "yes",
+                        "x-revalidated": "yes",
                         "Content-Length": "0"
                     ]
                 )
@@ -54,6 +55,10 @@ struct NXResponseCacheRevalidationTests {
         #expect(response.response.value(forHTTPHeaderField: "ETag") == "v1")
         #expect(response.response.value(forHTTPHeaderField: "X-Revalidated") == "yes")
         #expect(response.response.value(forHTTPHeaderField: "Content-Length") == "24")
+        let revalidatedHeaders = response.response.allHeaderFields.filter { entry in
+            (entry.key as? String)?.caseInsensitiveCompare("X-Revalidated") == .orderedSame
+        }
+        #expect(revalidatedHeaders.count == 1)
         #expect(await attemptCounter.value() == 2)
     }
 
