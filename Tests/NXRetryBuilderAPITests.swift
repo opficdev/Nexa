@@ -11,6 +11,40 @@ import Testing
 
 @Suite("재시도 builder API 테스트")
 struct NXRetryBuilderAPITests {
+    @Test("기본 maxAttempts는 GET 요청을 세 번 실행한다")
+    func defaultMaximumAttemptsRetriesGetThreeTimes() async throws {
+        let counter = AttemptCounter()
+        let client = makeClient { _ in
+            let attemptNumber = await counter.increment()
+
+            if attemptNumber < 3 {
+                throw URLError(.timedOut)
+            }
+
+            return makeRawResponse(statusCode: 200, body: #"{"id":3,"name":"retry"}"#)
+        }
+
+        let user = try await client
+            .get("/users")
+            .retry()
+            .send(as: UserDTO.self)
+
+        #expect(user == UserDTO(id: 3, name: "retry"))
+        #expect(await counter.value() == 3)
+    }
+
+    @Test("typed builder의 기본 maxAttempts는 세 번이다")
+    func typedBuilderDefaultMaximumAttemptsIsThree() {
+        let client = makeClient { _ in
+            makeRawResponse(statusCode: 200, body: #"{"id":1,"name":"typed"}"#)
+        }
+        let builder = client
+            .request(RetryingGetEndpoint())
+            .retry()
+
+        #expect(builder.retryPolicy?.maxAttempts == 3)
+    }
+
     @Test("allowing은 기본 GET 재시도를 유지한다")
     func allowingPreservesDefaultGetRetry() async throws {
         let counter = AttemptCounter()
@@ -45,6 +79,29 @@ struct NXRetryBuilderAPITests {
             let _: UserDTO = try await client
                 .post("/users")
                 .retry(maxAttempts: 3)
+                .send(as: UserDTO.self)
+        } throws: { error in
+            guard case NXError.timeout = error else {
+                return false
+            }
+            return true
+        }
+
+        #expect(await counter.value() == 1)
+    }
+
+    @Test("maxAttempts 0은 기본 GET을 한 번만 실행한다")
+    func maximumAttemptsNormalizesToOne() async {
+        let counter = AttemptCounter()
+        let client = makeClient { _ in
+            _ = await counter.increment()
+            throw URLError(.timedOut)
+        }
+
+        await #expect {
+            let _: UserDTO = try await client
+                .get("/users")
+                .retry(maxAttempts: 0)
                 .send(as: UserDTO.self)
         } throws: { error in
             guard case NXError.timeout = error else {
