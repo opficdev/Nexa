@@ -144,13 +144,33 @@ public struct NXRequestBuilder: Sendable {
         }
     }
 
-    /// Applies a retry policy to the request.
+    /// Applies retry behavior to the request.
     ///
-    /// - Parameter policy: Retry behavior to use during execution.
+    /// - Parameters:
+    ///   - maxAttempts: Maximum number of attempts including the initial request. Defaults to `3`.
+    ///   - backoff: Delay strategy used between retry attempts.
+    ///   - retryableStatusCodes: Status codes that should trigger a retry.
+    ///   - allowing: Additional HTTP methods that can retry alongside the default idempotent methods.
+    ///   - maximumServerDelay: Upper limit applied to a server-provided retry delay.
+    ///   - jitter: Randomization applied to local backoff delays.
     /// - Returns: Updated request builder.
-    public func retry(_ policy: NXRetryPolicy) -> Self {
+    public func retry(
+        maxAttempts: Int = 3,
+        backoff: NXRetryBackoff = .fixed(0),
+        retryableStatusCodes: Set<Int> = [408, 429, 500, 502, 503, 504],
+        allowing: Set<NXHTTPMethod> = [],
+        maximumServerDelay: TimeInterval = 60,
+        jitter: NXRetryJitter = .none
+    ) -> Self {
         modifying { requestSpec in
-            requestSpec.retryPolicy = RetryPolicy(policy)
+            requestSpec.retryPolicy = NXRetryPolicy(
+                maxAttempts: maxAttempts,
+                backoff: backoff,
+                retryableStatusCodes: retryableStatusCodes,
+                allowing: allowing,
+                maximumServerDelay: maximumServerDelay,
+                jitter: jitter
+            )
         }
     }
 
@@ -223,6 +243,10 @@ public struct NXRequestBuilder: Sendable {
             requestSpec: requestSpec,
             responseType: Response.self
         )
+    }
+
+    var retryPolicy: NXRetryPolicy? {
+        requestSpec.retryPolicy
     }
 
     func modifying(_ update: (inout RequestSpec) throws -> Void) rethrows -> Self {

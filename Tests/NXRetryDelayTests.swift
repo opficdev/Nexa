@@ -15,7 +15,7 @@ struct NXRetryDelayTests {
     func retryAfterSecondsUsesServerDelayCap(statusCode: Int) async throws {
         let recorder = RetryExecutionRecorder()
         let logger = MemoryLogger()
-        let policy = RetryPolicy(
+        let policy = NXRetryPolicy(
             maxAttempts: 2,
             maximumServerDelay: 60,
             jitter: .full
@@ -42,7 +42,7 @@ struct NXRetryDelayTests {
     @Test("Retry-After HTTP-date는 주입된 현재 시각을 기준으로 계산한다")
     func retryAfterHTTPDateUsesInjectedCurrentTime() async throws {
         let recorder = RetryExecutionRecorder()
-        let policy = RetryPolicy(maxAttempts: 2, maximumServerDelay: 180)
+        let policy = NXRetryPolicy(maxAttempts: 2, maximumServerDelay: 180)
         let referenceDate = Date(timeIntervalSince1970: 0)
 
         _ = try await execute(
@@ -64,7 +64,7 @@ struct NXRetryDelayTests {
     @Test("잘못된 Retry-After는 local backoff로 복귀한다")
     func invalidRetryAfterUsesLocalBackoff() async throws {
         let recorder = RetryExecutionRecorder()
-        let policy = RetryPolicy(maxAttempts: 2, backoff: .fixed(4))
+        let policy = NXRetryPolicy(maxAttempts: 2, backoff: .fixed(4))
 
         _ = try await execute(
             policy: policy,
@@ -85,7 +85,7 @@ struct NXRetryDelayTests {
     @Test("local jitter는 주입된 무작위 값으로 계산한다")
     func localJitterUsesInjectedRandomValue() async throws {
         let recorder = RetryExecutionRecorder()
-        let policy = RetryPolicy(maxAttempts: 2, backoff: .fixed(4), jitter: .full)
+        let policy = NXRetryPolicy(maxAttempts: 2, backoff: .fixed(4), jitter: .full)
 
         _ = try await execute(
             policy: policy,
@@ -104,7 +104,7 @@ struct NXRetryDelayTests {
     }
 
     private func execute(
-        policy: RetryPolicy,
+        policy: NXRetryPolicy,
         responses: [NXRawResponse],
         logger: any NXLogger = NXNoopLogger(),
         dependencies: NXRetryExecutionDependencies

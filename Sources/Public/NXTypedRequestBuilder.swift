@@ -108,12 +108,32 @@ public struct NXTypedRequestBuilder<Response>: Sendable where Response: Decodabl
         Self(requestBuilder: requestBuilder.contentType(value))
     }
 
-    /// Applies a retry policy to the request.
+    /// Applies retry behavior to the request.
     ///
-    /// - Parameter policy: Retry behavior to use during execution.
+    /// - Parameters:
+    ///   - maxAttempts: Maximum number of attempts including the initial request. Defaults to `3`.
+    ///   - backoff: Delay strategy used between retry attempts.
+    ///   - retryableStatusCodes: Status codes that should trigger a retry.
+    ///   - allowing: Additional HTTP methods that can retry alongside the default idempotent methods.
+    ///   - maximumServerDelay: Upper limit applied to a server-provided retry delay.
+    ///   - jitter: Randomization applied to local backoff delays.
     /// - Returns: Updated typed request builder.
-    public func retry(_ policy: NXRetryPolicy) -> Self {
-        Self(requestBuilder: requestBuilder.retry(policy))
+    public func retry(
+        maxAttempts: Int = 3,
+        backoff: NXRetryBackoff = .fixed(0),
+        retryableStatusCodes: Set<Int> = [408, 429, 500, 502, 503, 504],
+        allowing: Set<NXHTTPMethod> = [],
+        maximumServerDelay: TimeInterval = 60,
+        jitter: NXRetryJitter = .none
+    ) -> Self {
+        Self(requestBuilder: requestBuilder.retry(
+            maxAttempts: maxAttempts,
+            backoff: backoff,
+            retryableStatusCodes: retryableStatusCodes,
+            allowing: allowing,
+            maximumServerDelay: maximumServerDelay,
+            jitter: jitter
+        ))
     }
 
     /// Applies a response validation policy to the request.
@@ -145,5 +165,9 @@ public struct NXTypedRequestBuilder<Response>: Sendable where Response: Decodabl
     /// - Throws: `NXError` if the request fails or decoding fails.
     public func send() async throws -> Response {
         try await requestBuilder.send(as: Response.self)
+    }
+
+    var retryPolicy: NXRetryPolicy? {
+        requestBuilder.retryPolicy
     }
 }

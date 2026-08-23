@@ -46,7 +46,7 @@ struct NXCoreModelPolicyTests {
 
     @Test("재시도 정책이 최소 시도 횟수와 backoff 지연 계산을 보장한다")
     func retryPolicyNormalizesAttemptsAndBackoff() {
-        let retryPolicy = RetryPolicy(maxAttempts: 0, backoff: .fixed(-1))
+        let retryPolicy = NXRetryPolicy(maxAttempts: 0, backoff: .fixed(-1))
 
         #expect(retryPolicy.maxAttempts == 1)
 
@@ -62,8 +62,8 @@ struct NXCoreModelPolicyTests {
 
     @Test("재시도 정책이 멱등 method와 서버 지연 기본값을 제공한다")
     func retryPolicyDefaultRetrySemantics() {
-        let defaultRetryPolicy = RetryPolicy(maxAttempts: 2)
-        let retryPolicy = RetryPolicy(maxAttempts: 2, maximumServerDelay: -1)
+        let defaultRetryPolicy = NXRetryPolicy(maxAttempts: 2)
+        let retryPolicy = NXRetryPolicy(maxAttempts: 2, maximumServerDelay: -1)
 
         #expect(defaultRetryPolicy.allowedMethods == [.get, .head, .put, .delete, .options])
         #expect(defaultRetryPolicy.maximumServerDelay == 60)

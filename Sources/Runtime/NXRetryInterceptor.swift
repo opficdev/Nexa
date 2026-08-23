@@ -96,7 +96,7 @@ struct NXRetryInterceptor: NXHTTPInterceptor {
 
     private func retryDelay(
         after response: NXRawResponse,
-        retryPolicy: RetryPolicy,
+        retryPolicy: NXRetryPolicy,
         attemptNumber: Int
     ) -> TimeInterval {
         if let serverDelay = serverDelay(from: response.response) {
@@ -234,7 +234,7 @@ struct NXRetryInterceptor: NXHTTPInterceptor {
     }
 
     private func localDelay(
-        retryPolicy: RetryPolicy,
+        retryPolicy: NXRetryPolicy,
         attemptNumber: Int
     ) -> TimeInterval {
         let delay = retryPolicy.backoff.delay(forAttempt: attemptNumber)
