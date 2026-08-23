@@ -14,19 +14,31 @@ struct NXAuthRefreshConcurrencyTests {
     @Test("동시 401 오십 건은 refresh 한 번과 요청별 한 번 재전송만 수행한다")
     func concurrentUnauthorizedRequestsShareOneRefresh() async throws {
         let counter = AttemptCounter()
+        let unauthorizedRequestGate = ParticipantGate(expectedCount: 50)
+        let refreshStartProbe = RefreshStartProbe()
+        let refreshCompletionGate = RefreshCompletionGate()
         let provider = RefreshTestProvider(
             currentToken: "old-token",
-            refreshResult: .success("new-token")
+            refreshResult: .success("new-token"),
+            refreshStartProbe: refreshStartProbe,
+            refreshCompletionGate: refreshCompletionGate
         )
         let logger = MemoryLogger()
         let client = makeClient(
             counter: counter,
             logger: logger,
-            authTokenProvider: provider
+            authTokenProvider: provider,
+            unauthorizedRequestGate: unauthorizedRequestGate
         )
         let request = client.get("/users/me").authorized()
 
-        let users = try await send(request, count: 50)
+        let task = Task {
+            try await Self.send(request, count: 50)
+        }
+        await unauthorizedRequestGate.waitForParticipants()
+        await refreshStartProbe.waitForStart()
+        await refreshCompletionGate.release()
+        let users = try await task.value
 
         #expect(users == Array(repeating: UserDTO(id: 1, name: "refreshed"), count: 50))
         #expect(await counter.value() == 100)
@@ -37,20 +49,29 @@ struct NXAuthRefreshConcurrencyTests {
     @Test("같은 client 값 복사본은 진행 중인 refresh를 공유한다")
     func copiedClientSharesInFlightRefresh() async throws {
         let counter = AttemptCounter()
+        let unauthorizedRequestGate = ParticipantGate(expectedCount: 2)
+        let refreshStartProbe = RefreshStartProbe()
+        let refreshCompletionGate = RefreshCompletionGate()
         let provider = RefreshTestProvider(
             currentToken: "old-token",
-            refreshResult: .success("new-token")
+            refreshResult: .success("new-token"),
+            refreshStartProbe: refreshStartProbe,
+            refreshCompletionGate: refreshCompletionGate
         )
         let logger = MemoryLogger()
         let client = makeClient(
             counter: counter,
             logger: logger,
-            authTokenProvider: provider
+            authTokenProvider: provider,
+            unauthorizedRequestGate: unauthorizedRequestGate
         )
         let copiedClient = client
 
         async let firstUser = client.get("/users/me").authorized().send(as: UserDTO.self)
         async let secondUser = copiedClient.get("/users/me").authorized().send(as: UserDTO.self)
+        await unauthorizedRequestGate.waitForParticipants()
+        await refreshStartProbe.waitForStart()
+        await refreshCompletionGate.release()
         let firstResult = try await firstUser
         let secondResult = try await secondUser
 
@@ -63,19 +84,31 @@ struct NXAuthRefreshConcurrencyTests {
     @Test("동시 refresh 실패 요청은 같은 timeout 결과를 받는다")
     func concurrentUnauthorizedRequestsShareRefreshFailure() async {
         let counter = AttemptCounter()
+        let unauthorizedRequestGate = ParticipantGate(expectedCount: 50)
+        let refreshStartProbe = RefreshStartProbe()
+        let refreshCompletionGate = RefreshCompletionGate()
         let provider = RefreshTestProvider(
             currentToken: "old-token",
-            refreshResult: .failure(URLError(.timedOut))
+            refreshResult: .failure(URLError(.timedOut)),
+            refreshStartProbe: refreshStartProbe,
+            refreshCompletionGate: refreshCompletionGate
         )
         let logger = MemoryLogger()
         let client = makeClient(
             counter: counter,
             logger: logger,
-            authTokenProvider: provider
+            authTokenProvider: provider,
+            unauthorizedRequestGate: unauthorizedRequestGate
         )
         let request = client.get("/users/me").authorized()
 
-        let errors = await sendFailures(request, count: 50)
+        let task = Task {
+            await Self.sendFailures(request, count: 50)
+        }
+        await unauthorizedRequestGate.waitForParticipants()
+        await refreshStartProbe.waitForStart()
+        await refreshCompletionGate.release()
+        let errors = await task.value
 
         #expect(errors.count == 50)
         #expect(errors.allSatisfy { error in
@@ -122,17 +155,21 @@ struct NXAuthRefreshConcurrencyTests {
     @Test("호출자 취소는 공유 refresh와 다른 요청을 취소하지 않는다")
     func cancellingCallerDoesNotCancelSharedRefresh() async throws {
         let counter = AttemptCounter()
+        let unauthorizedRequestGate = ParticipantGate(expectedCount: 2)
         let refreshStartProbe = RefreshStartProbe()
+        let refreshCompletionGate = RefreshCompletionGate()
         let provider = RefreshTestProvider(
             currentToken: "old-token",
             refreshResult: .success("new-token"),
-            refreshStartProbe: refreshStartProbe
+            refreshStartProbe: refreshStartProbe,
+            refreshCompletionGate: refreshCompletionGate
         )
         let logger = MemoryLogger()
         let client = makeClient(
             counter: counter,
             logger: logger,
-            authTokenProvider: provider
+            authTokenProvider: provider,
+            unauthorizedRequestGate: unauthorizedRequestGate
         )
 
         let firstTask = Task {
@@ -141,7 +178,13 @@ struct NXAuthRefreshConcurrencyTests {
         await refreshStartProbe.waitForStart()
         firstTask.cancel()
 
-        let secondUser = try await client.get("/users/me").authorized().send(as: UserDTO.self)
+        let secondTask = Task {
+            try await client.get("/users/me").authorized().send(as: UserDTO.self)
+        }
+        await unauthorizedRequestGate.waitForParticipants()
+        await refreshCompletionGate.release()
+
+        let secondUser = try await secondTask.value
         _ = try? await firstTask.value
 
         #expect(secondUser == UserDTO(id: 1, name: "refreshed"))
@@ -153,7 +196,8 @@ struct NXAuthRefreshConcurrencyTests {
     private func makeClient(
         counter: AttemptCounter,
         logger: any NXLogger,
-        authTokenProvider: any NXAuthTokenProvider
+        authTokenProvider: any NXAuthTokenProvider,
+        unauthorizedRequestGate: ParticipantGate? = nil
     ) -> NXAPIClient {
         NXAPIClient(
             configuration: NXClientConfiguration(
@@ -163,6 +207,7 @@ struct NXAuthRefreshConcurrencyTests {
 
                     switch request.value(forHTTPHeaderField: "Authorization") {
                     case "Bearer old-token":
+                        await unauthorizedRequestGate?.recordParticipant()
                         return makeRawResponse(statusCode: 401, body: #"{"message":"expired"}"#)
                     case "Bearer new-token":
                         return makeRawResponse(statusCode: 200, body: #"{"id":1,"name":"refreshed"}"#)
@@ -177,7 +222,7 @@ struct NXAuthRefreshConcurrencyTests {
         )
     }
 
-    private func send(_ request: NXRequestBuilder, count: Int) async throws -> [UserDTO] {
+    private static func send(_ request: NXRequestBuilder, count: Int) async throws -> [UserDTO] {
         try await withThrowingTaskGroup(of: UserDTO.self) { group in
             for _ in 0..<count {
                 group.addTask {
@@ -193,7 +238,7 @@ struct NXAuthRefreshConcurrencyTests {
         }
     }
 
-    private func sendFailures(_ request: NXRequestBuilder, count: Int) async -> [NXError] {
+    private static func sendFailures(_ request: NXRequestBuilder, count: Int) async -> [NXError] {
         await withTaskGroup(of: NXError?.self) { group in
             for _ in 0..<count {
                 group.addTask {
@@ -223,16 +268,19 @@ private actor RefreshTestProvider: NXAuthTokenProvider {
     private let currentToken: String?
     private let refreshResult: Result<String?, URLError>
     private let refreshStartProbe: RefreshStartProbe?
+    private let refreshCompletionGate: RefreshCompletionGate?
     private var refreshInvocationCount = 0
 
     init(
         currentToken: String?,
         refreshResult: Result<String?, URLError>,
-        refreshStartProbe: RefreshStartProbe? = nil
+        refreshStartProbe: RefreshStartProbe? = nil,
+        refreshCompletionGate: RefreshCompletionGate? = nil
     ) {
         self.currentToken = currentToken
         self.refreshResult = refreshResult
         self.refreshStartProbe = refreshStartProbe
+        self.refreshCompletionGate = refreshCompletionGate
     }
 
     func currentAccessToken() async throws -> String? {
@@ -242,12 +290,66 @@ private actor RefreshTestProvider: NXAuthTokenProvider {
     func refreshAccessToken() async throws -> String? {
         refreshInvocationCount += 1
         await refreshStartProbe?.recordStart()
-        try await Task.sleep(nanoseconds: 50_000_000)
+        await refreshCompletionGate?.wait()
         return try refreshResult.get()
     }
 
     func refreshCount() -> Int {
         refreshInvocationCount
+    }
+}
+
+private actor ParticipantGate {
+    private let expectedCount: Int
+    private var participantCount = 0
+    private var continuation: CheckedContinuation<Void, Never>?
+
+    init(expectedCount: Int) {
+        self.expectedCount = expectedCount
+    }
+
+    func recordParticipant() {
+        participantCount += 1
+
+        guard expectedCount <= participantCount else {
+            return
+        }
+
+        continuation?.resume()
+        continuation = nil
+    }
+
+    func waitForParticipants() async {
+        guard participantCount < expectedCount else {
+            return
+        }
+
+        await withCheckedContinuation { continuation in
+            self.continuation = continuation
+        }
+    }
+}
+
+private actor RefreshCompletionGate {
+    private var isReleased = false
+    private var continuations: [CheckedContinuation<Void, Never>] = []
+
+    func wait() async {
+        guard !isReleased else {
+            return
+        }
+
+        await withCheckedContinuation { continuation in
+            continuations.append(continuation)
+        }
+    }
+
+    func release() {
+        isReleased = true
+        continuations.forEach { continuation in
+            continuation.resume()
+        }
+        continuations.removeAll()
     }
 }
 
