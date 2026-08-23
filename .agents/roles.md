@@ -16,6 +16,8 @@ Runnable AI role workflow for Nexa work. Role assignment, approved Spec handoff,
 - AI workflow documents under `.agents/`; approved Specs under `.agents/specs/`; no AI workflow documents under `docs/`.
 - Non-trivial work order: `Design Brief → Designer Result → 사용자 승인 → Spec → Task Packet → Implementer → Code Reviewer → Verification Runner`.
 - Requirement or scope changes during implementation requiring Spec update and renewed user approval.
+- For review feedback, GitHub/CI Analyst collects only live GitHub facts: thread ID, body, author, resolved state, commit SHA, file and line, CI conclusion, and log excerpt. The Analyst does not determine technical validity, priority, scope inclusion, or required code changes.
+- For review feedback, Designer compares the Analyst facts with code, diff, approved Spec, and architecture constraints, then owns the `required`, `optional`, `already handled`, or `rejected` classification and its evidence.
 
 ## Model assignment
 
@@ -97,6 +99,9 @@ Runnable AI role workflow for Nexa work. Role assignment, approved Spec handoff,
 - Minimum commit units:
 - Spec path:
 - User approval needed:
+- Review feedback classification:
+- Code, Spec, or architecture evidence:
+- Scope impact:
 ```
 
 ### Implementer
@@ -154,9 +159,9 @@ Runnable AI role workflow for Nexa work. Role assignment, approved Spec handoff,
 ## GitHub CI Result
 
 - Source checked:
-- Current state:
-- Findings:
-- Required follow-up:
+- Observed facts:
+- CI state:
+- Missing evidence:
 ```
 
 ### Documentation Writer

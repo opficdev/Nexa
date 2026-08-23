@@ -43,21 +43,26 @@ Non-trivial design and implementation work sequence:
 
 ### Role order
 
-1. GitHub/CI Analyst.
-2. Planner.
-3. Designer.
-4. User approval, Spec, and Task Packet.
-5. Architecture Watcher when architecture-sensitive scope.
-6. Implementer.
-7. Code Reviewer.
-8. Verification Runner.
-9. GitHub/CI Analyst when user requested review reply or resolution.
+1. GitHub/CI Analyst collects live review thread and CI facts.
+2. Designer analyzes each thread against the code, diff, approved Spec, and architecture constraints.
+3. User approval, Spec, and Task Packet.
+4. Architecture Watcher when architecture-sensitive scope.
+5. Implementer.
+6. Code Reviewer.
+7. Verification Runner.
+8. GitHub/CI Analyst rechecks live thread state before a user-requested reply or resolution.
+9. Primary performs GitHub write only with explicit user authority.
 
 ### Execution
 
-- Planner classifies feedback as required, optional, already handled, or rejected.
-- Implementer applies accepted feedback only.
-- GitHub write actions require explicit user authority.
+- GitHub/CI Analyst records only live thread ID, body, author, resolved state, commit SHA, file and line, CI run or job conclusion, and log excerpts. The Analyst does not judge technical validity, priority, scope inclusion, or whether a code change is required.
+- Designer owns technical analysis and classifies every thread as `required`, `optional`, `already handled`, or `rejected` with code, diff, approved Spec, and architecture evidence.
+  - `required`: change needed to meet the approved acceptance criteria.
+  - `optional`: valid change outside the approved required scope.
+  - `already handled`: current diff already satisfies the request.
+  - `rejected`: technically incorrect or conflicting with approved constraints.
+- Implementer changes only items included in the user-approved Spec and Task Packet.
+- GitHub write actions require explicit user authority and are performed by Primary after the Analyst live-state recheck.
 
 ## CI failure triage
 
