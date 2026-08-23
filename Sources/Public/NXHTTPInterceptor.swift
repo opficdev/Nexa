@@ -11,7 +11,7 @@ import Foundation
 ///
 /// ## Overview
 ///
-/// Implement an interceptor when you need cross-cutting request behavior such as tracing, custom headers, or response observation.
+/// Implement an interceptor when you need cross-cutting request behavior such as tracing, custom headers, or response observation. An interceptor can replace request URL, headers, and body, but must preserve the configured HTTP method.
 ///
 /// ```swift
 /// import Foundation
@@ -59,8 +59,10 @@ public struct NXRequestExecutionContext: Sendable {
 
     /// Returns a copy of the context with a different request value.
     ///
-    /// - Parameter request: Replacement request to use for the remaining chain.
+    /// - Parameter request: Replacement request to use for the remaining chain. Its `httpMethod` must equal the configured request method.
     /// - Returns: A new execution context with the updated request.
+    ///
+    /// Passing a request with a different or missing `httpMethod` ends execution with ``NXError/invalidRequest(_:)`` before later interceptors, logging, caching, or transport.
     public func replacingRequest(_ request: URLRequest) -> Self {
         Self(
             request: request,
