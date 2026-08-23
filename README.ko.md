@@ -17,6 +17,7 @@ Nexa는 `URLSession` 기반의 SwiftUI 스타일 선언형 네트워킹 라이�
 - [Endpoint API](#endpoint-api)
 - [요청 전환](#요청-전환)
 - [설정](#설정)
+- [응답 cache](#응답-cache)
 - [재시도 정책](#재시도-정책)
 - [개발](#개발)
 - [테스트](#테스트)
@@ -32,7 +33,7 @@ Nexa는 `URLSession` 기반의 SwiftUI 스타일 선언형 네트워킹 라이�
 - [x] `NXAuthTokenProvider`를 통한 인증 및 토큰 갱신 흐름 내장
 - [x] Fixed backoff 및 exponential backoff 기반 재시도 정책
 - [x] 응답 유효성 검사 및 서버 에러 디코딩
-- [x] 성공한 `GET` 응답과 진행 중인 동일 요청을 위한 memory response cache
+- [x] 성공한 `GET` 응답과 진행 중인 동일 요청을 위한 validator 재검증 선택형 memory response cache
 - [x] 로거 훅 및 테스트를 위한 transport 추상화
 
 ## 요구 사항
@@ -77,7 +78,7 @@ dependencies: [
 | `NXTypedRequestBuilder<Response>` | Endpoint 설정 호환성 경계 | `func configure(_ builder: NXTypedRequestBuilder<User>) -> NXTypedRequestBuilder<User>` |
 | `NXEndpoint` | 엔드포인트 정의를 재사용하고 응답 타입을 함께 관리할 때 | `try await client.send(UserEndpoint(identifier: 1))` |
 | `NXClientConfiguration` | 공통 헤더, transport, 로거, 인증, 인코더, 디코더, 인터셉터를 한 번에 설정할 때 | `NXClientConfiguration(baseURL: url, authTokenProvider: yourAuthTokenProvider)` |
-| `NXCache` | 인증이 필요 없는 성공한 `GET` 응답을 짧은 TTL 동안 재사용할 때 | `NXClientConfiguration(baseURL: url, cache: .memory(ttl: 0.3))` |
+| `NXCache` | 인증이 필요 없는 성공한 `GET` 응답을 TTL 동안 재사용하거나 validator로 재검증할 때 | `NXClientConfiguration(baseURL: url, cache: .revalidatingMemory(ttl: 300))` |
 | `NXRetryBackoff` | 고정 또는 지수 재시도 지연이 필요할 때 | `.retry(maxAttempts: 3, backoff: .fixed(0))` |
 | `NXRetryJitter` | local 재시도 지연의 무작위 처리가 필요할 때 | `.retry(maxAttempts: 3, jitter: .full)` |
 | `NXValidationPolicy` | 허용할 상태 코드가 기본값(`200..<300`)과 다를 때 | `.validate(.statusCodes([200, 201, 204]))` |
@@ -344,6 +345,35 @@ let client = NXAPIClient(configuration: configuration)
 - `.authorized()` 요청에 대한 자동 인증 헤더 주입
 - 토큰 갱신 및 재시도 처리
 - 스터빙 및 격리 테스트를 위한 커스텀 transport
+
+## 응답 cache
+
+`NXCache.memory(ttl:)`는 인증이 필요 없는 성공한 `GET` 응답을 지정한 TTL 동안 재사용하고, 첫 요청이 진행 중인 동일 요청을 하나로 합칩니다. TTL 만료 뒤에는 조건부 header를 추가하지 않습니다.
+
+`NXCache.revalidatingMemory(ttl:)`는 같은 cache 동작에 더해 `ETag` 또는 `Last-Modified` header가 있는 만료 `200` 응답을 재검증합니다. Nexa는 cache key 생성 뒤 `If-None-Match`, `If-Modified-Since`를 추가합니다. validator가 일치하고 body가 없는 `304 Not Modified`는 cached body를 `200` 응답으로 반환합니다. validator가 다르거나 body가 있는 `304`는 만료 응답을 제거하고 일반 응답 유효성 검사로 처리합니다. 변경된 `200`은 cached body와 validator를 교체합니다. cached `201`, `204`와 다른 성공 non-`200` 응답은 기존 TTL 만료 뒤 무조건 요청 경로를 유지합니다.
+
+```swift
+let client = NXAPIClient(
+	configuration: NXClientConfiguration(
+		baseURL: URL(string: "https://api.example.com")!,
+		cache: .revalidatingMemory(ttl: 300)
+	)
+)
+```
+
+cache와 진행 중인 요청 store는 `NXAPIClient` 인스턴스에 속합니다. 요청 간 cache 상태를 공유하려면 service 또는 의존성 주입 계층에 client를 저장해 재사용해야 합니다. `NXAPIClient(configuration:)`를 새로 만들면 독립 store가 생성됩니다. 기존 client 값의 복사본은 원래 store를 공유합니다.
+
+```swift
+struct UserService {
+	private let client: NXAPIClient
+
+	init(client: NXAPIClient) {
+		self.client = client
+	}
+}
+```
+
+Nexa는 `Vary`, disk cache, 전체 `Cache-Control` 해석, stale-if-error를 구현하지 않습니다. `.revalidatingMemory(ttl:)`는 `NXCache` enum case를 추가하므로 `NXCache`의 모든 case를 나열한 `switch`는 재컴파일 시 새 case를 처리해야 합니다.
 
 ## 재시도 정책
 

@@ -11,6 +11,10 @@ import Foundation
 public enum NXCache: Sendable, Equatable {
     /// Does not cache responses and executes identical requests separately.
     case disabled
-    /// Stores successful GET responses in memory for the specified TTL and reuses in-flight identical GET request results.
+    /// Stores successful GET responses in memory for the specified TTL and reuses in-flight identical GET request results without validator revalidation.
     case memory(ttl: TimeInterval)
+    /// Stores successful GET responses in memory for the specified TTL and revalidates expired validator-backed `200` responses.
+    ///
+    /// The cache belongs to the `NXAPIClient` instance that receives this policy. Recreating the client creates an independent cache.
+    case revalidatingMemory(ttl: TimeInterval)
 }

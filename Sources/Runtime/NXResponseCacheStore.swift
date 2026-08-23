@@ -7,6 +7,28 @@
 
 import Foundation
 
+struct NXResponseCacheValidators: Sendable {
+    let entityTag: String?
+    let lastModified: String?
+
+    init?(response: HTTPURLResponse) {
+        let entityTag = response.value(forHTTPHeaderField: "ETag")
+        let lastModified = response.value(forHTTPHeaderField: "Last-Modified")
+
+        guard entityTag != nil || lastModified != nil else {
+            return nil
+        }
+
+        self.entityTag = entityTag
+        self.lastModified = lastModified
+    }
+}
+
+struct NXCacheRevalidationContext: Sendable {
+    let cachedResponse: NXRawResponse
+    let validators: NXResponseCacheValidators
+}
+
 actor NXResponseCacheStore {
     private var responses: [NXRequestCacheKey: CachedResponse] = [:]
     private var inFlightTasks: [NXRequestCacheKey: Task<NXRawResponse, any Error>] = [:]
@@ -14,10 +36,12 @@ actor NXResponseCacheStore {
     func response(
         for key: NXRequestCacheKey,
         ttl: TimeInterval,
+        revalidatesExpiredResponse: Bool,
         shouldCache: @escaping @Sendable (NXRawResponse) -> Bool,
-        load: @escaping @Sendable () async throws -> NXRawResponse
+        load: @escaping @Sendable (NXCacheRevalidationContext?) async throws -> NXRawResponse
     ) async throws -> NXRawResponse {
         let now = Date()
+        var revalidationContext: NXCacheRevalidationContext?
 
         if let cachedResponse = responses[key] {
             if now < cachedResponse.expirationDate {
@@ -25,6 +49,15 @@ actor NXResponseCacheStore {
             }
 
             responses.removeValue(forKey: key)
+
+            if revalidatesExpiredResponse,
+               cachedResponse.rawResponse.response.statusCode == 200,
+               let validators = cachedResponse.validators {
+                revalidationContext = NXCacheRevalidationContext(
+                    cachedResponse: cachedResponse.rawResponse,
+                    validators: validators
+                )
+            }
         }
 
         if let task = inFlightTasks[key] {
@@ -32,7 +65,7 @@ actor NXResponseCacheStore {
         }
 
         let task = Task {
-            try await load()
+            try await load(revalidationContext)
         }
         inFlightTasks[key] = task
 
@@ -43,7 +76,10 @@ actor NXResponseCacheStore {
             if shouldCache(rawResponse) {
                 responses[key] = CachedResponse(
                     rawResponse: rawResponse,
-                    expirationDate: Date().addingTimeInterval(ttl)
+                    expirationDate: Date().addingTimeInterval(ttl),
+                    validators: rawResponse.response.statusCode == 200
+                        ? NXResponseCacheValidators(response: rawResponse.response)
+                        : nil
                 )
             }
 
@@ -57,5 +93,6 @@ actor NXResponseCacheStore {
     private struct CachedResponse: Sendable {
         let rawResponse: NXRawResponse
         let expirationDate: Date
+        let validators: NXResponseCacheValidators?
     }
 }

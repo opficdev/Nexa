@@ -48,6 +48,27 @@ let response = try await client
 	.send()
 ```
 
+## Response Cache
+
+``NXCache/memory(ttl:)`` reuses successful unauthenticated `GET` responses for its TTL and shares an in-flight identical request. ``NXCache/revalidatingMemory(ttl:)`` additionally revalidates an expired cached `200` response that has an `ETag` or `Last-Modified` header.
+
+Nexa constructs the cache key before adding `If-None-Match` and `If-Modified-Since`. A bodyless `304 Not Modified` with the matching validator becomes a `200` response with the cached body. A mismatched validator or body-bearing `304` does not reuse the cached body and follows normal validation. A changed `200` replaces the body and validator. Cached successful non-`200` responses retain the existing TTL-expiry reload behavior.
+
+```swift
+let client = NXAPIClient(
+	configuration: NXClientConfiguration(
+		baseURL: URL(string: "https://api.example.com")!,
+		cache: .revalidatingMemory(ttl: 300)
+	)
+)
+```
+
+## Client Cache Lifetime
+
+Each ``NXAPIClient`` initializer creates one in-memory cache and in-flight request store. Keep a client in a service or dependency container when requests should share cache state. A copied client value shares its original store; a separately initialized client does not.
+
+Nexa does not implement `Vary`, disk cache, full `Cache-Control` interpretation, or stale-if-error. Adding ``NXCache/revalidatingMemory(ttl:)`` adds an enum case, so consumers must update exhaustive `switch` statements over ``NXCache`` when recompiling.
+
 ## Retry Policy
 
 ``NXRequestBuilder/retry(maxAttempts:backoff:retryableStatusCodes:allowing:maximumServerDelay:jitter:)`` retries `GET`, `HEAD`, `PUT`, `DELETE`, and `OPTIONS` by default when a configured status code or a retryable transport error occurs. It uses three attempts when `maxAttempts` is omitted. Add `POST` or `PATCH` through `allowing` only when the server can safely receive the same request more than once.
@@ -113,6 +134,7 @@ let user = try await client.send(UserEndpoint(identifier: 42))
 - ``NXRawResponse``
 - ``NXError``
 - ``NXValidationPolicy``
+- ``NXCache``
 - ``NXRetryBackoff``
 - ``NXRetryJitter``
 - ``NXURLSessionTransport``

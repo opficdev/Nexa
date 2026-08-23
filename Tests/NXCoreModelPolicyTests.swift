@@ -80,6 +80,13 @@ struct NXCoreModelPolicyTests {
         #expect(NXValidationPolicy.statusCodes([201, 202]).allows(statusCode: 404) == false)
     }
 
+    @Test("validator 재검증 cache 정책을 표현한다")
+    func cacheSupportsValidatorRevalidationPolicy() {
+        let cache = NXCache.revalidatingMemory(ttl: 5)
+
+        #expect(cache == .revalidatingMemory(ttl: 5))
+    }
+
     @Test("요청 스펙 초기화 시 기본값이 올바르게 설정된다")
     func requestSpecDefaultValues() {
         let requestSpec = RequestSpec(method: .get, path: "/users")
