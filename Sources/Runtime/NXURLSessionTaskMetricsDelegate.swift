@@ -1,0 +1,65 @@
+//
+//  NXURLSessionTaskMetricsDelegate.swift
+//  Nexa
+//
+//  Created by opfic on 8/23/26.
+//
+
+import Foundation
+
+final class NXURLSessionTaskMetricsDelegate: NSObject, URLSessionTaskDelegate {
+    private let metricsObserver: any NXNetworkMetricsObserver
+
+    init(metricsObserver: any NXNetworkMetricsObserver) {
+        self.metricsObserver = metricsObserver
+    }
+
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        didFinishCollecting metrics: URLSessionTaskMetrics
+    ) {
+        let source = NXURLSessionTaskMetricsSource(metrics: metrics)
+        let snapshot = NXNetworkMetrics(source: source)
+
+        Task { [metricsObserver] in
+            await metricsObserver.record(snapshot)
+        }
+    }
+}
+
+private struct NXURLSessionTaskMetricsSource: NXNetworkMetricsSource {
+    let taskInterval: DateInterval
+    let redirectCount: Int
+    let transactions: [NXURLSessionTaskTransactionMetricsSource]
+
+    init(metrics: URLSessionTaskMetrics) {
+        taskInterval = metrics.taskInterval
+        redirectCount = metrics.redirectCount
+        transactions = metrics.transactionMetrics.map(NXURLSessionTaskTransactionMetricsSource.init)
+    }
+}
+
+private struct NXURLSessionTaskTransactionMetricsSource: NXNetworkTransactionMetricsSource {
+    let domainLookupStartDate: Date?
+    let domainLookupEndDate: Date?
+    let connectStartDate: Date?
+    let connectEndDate: Date?
+    let secureConnectionStartDate: Date?
+    let secureConnectionEndDate: Date?
+    let requestStartDate: Date?
+    let responseStartDate: Date?
+    let isConnectionReused: Bool
+
+    init(metrics: URLSessionTaskTransactionMetrics) {
+        domainLookupStartDate = metrics.domainLookupStartDate
+        domainLookupEndDate = metrics.domainLookupEndDate
+        connectStartDate = metrics.connectStartDate
+        connectEndDate = metrics.connectEndDate
+        secureConnectionStartDate = metrics.secureConnectionStartDate
+        secureConnectionEndDate = metrics.secureConnectionEndDate
+        requestStartDate = metrics.requestStartDate
+        responseStartDate = metrics.responseStartDate
+        isConnectionReused = metrics.isReusedConnection
+    }
+}

@@ -17,6 +17,7 @@ Nexa is a SwiftUI-inspired declarative networking library built on `URLSession`.
 - [Endpoint API](#endpoint-api)
 - [Request Migration](#request-migration)
 - [Configuration](#configuration)
+- [Transport Metrics](#transport-metrics)
 - [Authentication Refresh](#authentication-refresh)
 - [Response Cache](#response-cache)
 - [Retry Policy](#retry-policy)
@@ -37,6 +38,7 @@ Nexa is a SwiftUI-inspired declarative networking library built on `URLSession`.
 - [x] Response validation and server error decoding
 - [x] Memory response cache with optional validator revalidation for successful `GET` responses and in-flight identical requests
 - [x] Logger hooks and transport abstraction for testing
+- [x] `Sendable` URLSession task metrics observer
 
 ## Requirements
 
@@ -89,6 +91,7 @@ The rest of the public surface is made of extension points for auth, logging, te
 | `NXAuthTokenProvider` | When `.authorized()` requests need token lookup and refresh support | `authTokenProvider: yourAuthTokenProvider` |
 | `NXServerErrorDecoder` | When failed responses should decode into your own domain error | `serverErrorDecoder: yourServerErrorDecoder` |
 | `NXLogger` | When you want structured request lifecycle logging | `logger: yourLogger` |
+| `NXNetworkMetricsObserver` | When you want URLSession task timing snapshots without changing logger events | `NXURLSessionTransport(metricsObserver: yourObserver)` |
 | `NXRawResponse` | When you need both `Data` and `HTTPURLResponse` directly | `let response = try await client.get("/users").send()` |
 | `NXError` | When handling Nexa-specific failures in calling code | `catch let error as NXError` |
 | `NXHTTPMethod` | When defining an `NXEndpoint` method | `var method: NXHTTPMethod { .post }` |
@@ -169,6 +172,7 @@ Use the lower-level protocols only when the default behavior is not enough:
 - `NXAuthTokenProvider`: bearer token injection and refresh
 - `NXServerErrorDecoder`: server payload to domain error mapping
 - `NXLogger`: request lifecycle logging and observability
+- `NXNetworkMetricsObserver`: URLSession task timing snapshots
 
 ## Request Flow
 
@@ -347,6 +351,27 @@ Nexa currently supports:
 - Automatic auth header injection for `authorized()` requests
 - Token refresh and retry handling
 - Custom transports for stubbing and isolated tests
+
+## Transport Metrics
+
+`NXURLSessionTransport` can forward one `NXNetworkMetrics` snapshot to an `NXNetworkMetricsObserver` for each `URLSession` task. The snapshot contains task duration, redirect count, transaction count, and ordered `NXNetworkTransactionMetrics` values.
+
+Each transaction reports DNS, connection, TLS, and request-to-first-byte durations only when both Foundation timestamps exist. A missing timestamp remains `nil`. A reused connection is represented by `isConnectionReused` and can have `nil` DNS or connection durations.
+
+```swift
+import Foundation
+import Nexa
+
+actor MetricsObserver: NXNetworkMetricsObserver {
+	func record(_ metrics: NXNetworkMetrics) async {
+		print(metrics.taskDuration ?? 0)
+	}
+}
+
+let transport = NXURLSessionTransport(metricsObserver: MetricsObserver())
+```
+
+Only `NXURLSessionTransport` collects these snapshots. A custom `NXHTTPTransport` and a cache hit do not synthesize metrics. Observer delivery does not delay request completion, and its order relative to `NXLogger` events is not guaranteed.
 
 ## Authentication Refresh
 

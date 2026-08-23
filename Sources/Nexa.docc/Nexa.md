@@ -10,7 +10,7 @@ Use ``NXAPIClient`` to create an ``NXRequestBuilder`` from a relative path. Call
 
 Adopt ``NXEndpoint`` when a request shape should be reusable and carry its response type with it. Its existing ``NXTypedRequestBuilder`` configuration contract remains available for endpoint compatibility.
 
-Lower-level customization points such as ``NXHTTPTransport``, ``NXHTTPInterceptor``, ``NXAuthTokenProvider``, ``NXServerErrorDecoder``, and ``NXLogger`` let you replace or extend the default behavior without changing the higher-level request flow.
+Lower-level customization points such as ``NXHTTPTransport``, ``NXHTTPInterceptor``, ``NXAuthTokenProvider``, ``NXServerErrorDecoder``, ``NXLogger``, and ``NXNetworkMetricsObserver`` let you replace or extend the default behavior without changing the higher-level request flow.
 
 ## Quick Start
 
@@ -76,6 +76,24 @@ let client = NXAPIClient(
 Each ``NXAPIClient`` initializer creates one in-memory cache and in-flight request store. Keep a client in a service or dependency container when requests should share cache state. A copied client value shares its original store; a separately initialized client does not.
 
 Nexa does not implement `Vary`, disk cache, full `Cache-Control` interpretation, or stale-if-error. Adding ``NXCache/revalidatingMemory(ttl:)`` adds an enum case, so consumers must update exhaustive `switch` statements over ``NXCache`` when recompiling.
+
+## Transport Metrics
+
+``NXURLSessionTransport`` can forward a ``NXNetworkMetrics`` value to an ``NXNetworkMetricsObserver``. The value contains task duration, redirect count, transaction count, and one ``NXNetworkTransactionMetrics`` value for each transaction reported by `URLSession`.
+
+Each transaction records DNS, connection, TLS, and request-to-first-byte durations when both Foundation timestamps exist. A missing timestamp remains `nil`; a reused connection is represented by `isConnectionReused` and can therefore have `nil` DNS or connection durations.
+
+```swift
+actor MetricsObserver: NXNetworkMetricsObserver {
+	func record(_ metrics: NXNetworkMetrics) async {
+		print(metrics.taskDuration ?? 0)
+	}
+}
+
+let transport = NXURLSessionTransport(metricsObserver: MetricsObserver())
+```
+
+Only ``NXURLSessionTransport`` collects this value. A custom ``NXHTTPTransport`` and a cache hit do not synthesize metrics. Observer delivery is independent of request completion, and its order relative to ``NXLogger`` events is not guaranteed.
 
 ## Retry Policy
 
@@ -146,6 +164,8 @@ let user = try await client.send(UserEndpoint(identifier: 42))
 - ``NXRetryBackoff``
 - ``NXRetryJitter``
 - ``NXURLSessionTransport``
+- ``NXNetworkMetrics``
+- ``NXNetworkTransactionMetrics``
 
 ### Extension Points
 
@@ -157,6 +177,7 @@ let user = try await client.send(UserEndpoint(identifier: 42))
 - ``NXDefaultServerErrorDecoder``
 - ``NXLogger``
 - ``NXNoopLogger``
+- ``NXNetworkMetricsObserver``
 
 ### Logging
 
