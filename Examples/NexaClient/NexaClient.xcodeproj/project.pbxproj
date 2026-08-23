@@ -16,9 +16,9 @@
 
 /* Begin PBXFileReference section */
 		1E4507C23C16857EDCCB7C77 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
-		602E17E5451FC46F0B078998 /* NexaClientApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NexaClientApp.swift; path = NexaClient/NexaClientApp.swift; sourceTree = "<group>"; };
-		9398B6CF8522A7EC915B1B82 /* NexaIntegrationPreview.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NexaIntegrationPreview.swift; path = NexaClient/NexaIntegrationPreview.swift; sourceTree = "<group>"; };
-		C3CC707D1B1D4215893D0C24 /* ContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ContentView.swift; path = NexaClient/ContentView.swift; sourceTree = "<group>"; };
+		602E17E5451FC46F0B078998 /* NexaClientApp.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NexaClientApp.swift; path = NexaClientApp.swift; sourceTree = "<group>"; };
+		9398B6CF8522A7EC915B1B82 /* NexaIntegrationPreview.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NexaIntegrationPreview.swift; path = NexaIntegrationPreview.swift; sourceTree = "<group>"; };
+		C3CC707D1B1D4215893D0C24 /* ContentView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ContentView.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		EBFB666B6AFCF02FCBA1B5A2 /* NexaClient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = NexaClient.app; path = NexaClient.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 

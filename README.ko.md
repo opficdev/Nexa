@@ -78,7 +78,8 @@ dependencies: [
 | `NXEndpoint` | 엔드포인트 정의를 재사용하고 응답 타입을 함께 관리할 때 | `try await client.send(UserEndpoint(identifier: 1))` |
 | `NXClientConfiguration` | 공통 헤더, transport, 로거, 인증, 인코더, 디코더, 인터셉터를 한 번에 설정할 때 | `NXClientConfiguration(baseURL: url, authTokenProvider: yourAuthTokenProvider)` |
 | `NXCache` | 인증이 필요 없는 성공한 `GET` 응답을 짧은 TTL 동안 재사용할 때 | `NXClientConfiguration(baseURL: url, cache: .memory(ttl: 0.3))` |
-| `NXRetryPolicy` | 재시도 가능한 상태 코드나 전송 오류 시 재시도할 때 | `.retry(.init(maxAttempts: 3))` |
+| `NXRetryBackoff` | 고정 또는 지수 재시도 지연이 필요할 때 | `.retry(maxAttempts: 3, backoff: .fixed(0))` |
+| `NXRetryJitter` | local 재시도 지연의 무작위 처리가 필요할 때 | `.retry(maxAttempts: 3, jitter: .full)` |
 | `NXValidationPolicy` | 허용할 상태 코드가 기본값(`200..<300`)과 다를 때 | `.validate(.statusCodes([200, 201, 204]))` |
 | `NXHTTPTransport` | 테스트용 스텁이 필요하거나 transport 구현을 교체할 때 | `NXClientConfiguration(baseURL: url, transport: yourStubTransport)` |
 | `NXHTTPInterceptor` | 트레이싱이나 헤더 주입처럼 요청 전반에 적용되는 처리가 필요할 때 | `.intercept(yourInterceptor)` |
@@ -346,23 +347,30 @@ let client = NXAPIClient(configuration: configuration)
 
 ## 재시도 정책
 
-`NXRetryPolicy`는 설정한 재시도 상태 코드 또는 전송 오류가 발생하면 기본으로 `GET`, `HEAD`, `PUT`, `DELETE`, `OPTIONS`를 재시도합니다. 같은 요청을 반복해도 안전하게 처리하는 엔드포인트일 때만 `POST`, `PATCH`를 `retryableMethods`에 명시적으로 추가할 수 있습니다.
+`.retry(...)`는 설정한 재시도 상태 코드 또는 전송 오류가 발생하면 기본으로 `GET`, `HEAD`, `PUT`, `DELETE`, `OPTIONS`를 재시도합니다. `maxAttempts`를 생략하면 세 번 시도합니다. 같은 요청을 반복해도 안전하게 처리하는 엔드포인트일 때만 `POST`, `PATCH`를 `allowing`에 명시적으로 추가할 수 있습니다.
 
-재시도 가능한 `429`, `503` 응답에서는 `Retry-After`의 초 단위와 HTTP-date 값을 처리합니다. 유효한 서버 값은 local backoff를 대체하고 기본 60초인 `maximumServerDelay`로 제한되며 `NXRetryLog`에 기록됩니다. `Jitter.full`은 local backoff에만 적용되고 서버가 지정한 지연을 줄이지 않습니다.
+재시도 가능한 `429`, `503` 응답에서는 `Retry-After`의 초 단위와 HTTP-date 값을 처리합니다. 유효한 서버 값은 local backoff를 대체하고 기본 60초인 `maximumServerDelay`로 제한되며 `NXRetryLog`에 기록됩니다. `NXRetryJitter.full`은 local backoff에만 적용되고 서버가 지정한 지연을 줄이지 않습니다.
 
 ```swift
-let retryPolicy = NXRetryPolicy(
-	maxAttempts: 3,
-	retryableMethods: [.get, .post],
-	maximumServerDelay: 30,
-	jitter: .none
-)
-
 let user = try await client
 	.post("/users")
-	.retry(retryPolicy)
+	.retry(
+		maxAttempts: 3,
+		backoff: .fixed(0),
+		allowing: [.post],
+		maximumServerDelay: 30,
+		jitter: .none
+	)
 	.send(as: User.self)
 ```
+
+## Nexa 1.3 전환
+
+Nexa 1.3에서는 공개 `NXRetryPolicy` 생성자, `NXRetryPolicy.Backoff`, `NXRetryPolicy.Jitter`, `.retry(_:)`를 제거합니다. `NXRetryPolicy`는 internal 구현 타입으로 유지합니다. `NXRetryBackoff`, `NXRetryJitter`와 `.retry(maxAttempts:backoff:retryableStatusCodes:allowing:maximumServerDelay:jitter:)`를 사용하며 `maxAttempts`의 기본값은 `3`입니다.
+
+## Interceptor method 계약
+
+`NXHTTPInterceptor.replacingRequest(_:)`는 request URL, header, body를 바꿀 수 있지만 method는 설정한 method와 같아야 합니다. 다른 method는 이후 interceptor, logger, cache, transport 실행 전에 `NXError.invalidRequest`로 종료됩니다.
 
 ## 개발
 

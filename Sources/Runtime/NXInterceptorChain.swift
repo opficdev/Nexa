@@ -14,6 +14,10 @@ enum NXInterceptorChain {
         transport: any NXHTTPTransport
     ) async throws -> NXRawResponse {
         @Sendable func proceed(index: Int, context: NXRequestExecutionContext) async throws -> NXRawResponse {
+            guard context.request.httpMethod == context.specification.method.rawValue else {
+                throw NXError.invalidRequest("Interceptor request method must match the request specification method.")
+            }
+
             if index < interceptors.count {
                 return try await interceptors[index].intercept(context: context) { nextContext in
                     try await proceed(index: index + 1, context: nextContext)

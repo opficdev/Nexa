@@ -50,21 +50,26 @@ let response = try await client
 
 ## Retry Policy
 
-``NXRetryPolicy`` retries `GET`, `HEAD`, `PUT`, `DELETE`, and `OPTIONS` by default when a configured status code or a retryable transport error occurs. Add `POST` or `PATCH` to `retryableMethods` only when the server can safely receive the same request more than once.
+``NXRequestBuilder/retry(maxAttempts:backoff:retryableStatusCodes:allowing:maximumServerDelay:jitter:)`` retries `GET`, `HEAD`, `PUT`, `DELETE`, and `OPTIONS` by default when a configured status code or a retryable transport error occurs. It uses three attempts when `maxAttempts` is omitted. Add `POST` or `PATCH` through `allowing` only when the server can safely receive the same request more than once.
 
-For `429` and `503`, a valid `Retry-After` response header takes precedence over local backoff. Nexa accepts delay seconds and HTTP-date values, limits the result with `maximumServerDelay`, and records the selected delay through ``NXRetryLog``. Local ``NXRetryPolicy/Jitter`` does not change a server-provided delay.
+For `429` and `503`, a valid `Retry-After` response header takes precedence over local backoff. Nexa accepts delay seconds and HTTP-date values, limits the result with `maximumServerDelay`, and records the selected delay through ``NXRetryLog``. Local ``NXRetryJitter`` does not change a server-provided delay.
 
 ```swift
-let policy = NXRetryPolicy(
-	maxAttempts: 3,
-	retryableMethods: [.get, .post],
-	maximumServerDelay: 30
-)
+let user = try await client
+	.post("/users")
+	.retry(
+		maxAttempts: 3,
+		allowing: [.post],
+		maximumServerDelay: 30
+	)
+	.send(as: User.self)
 ```
 
 ## Migration
 
-Nexa 1.3 removes `NXRequestBuilder.raw()` and `NXTypedRequestBuilder.raw()`. Use `NXRequestBuilder.send()` for a raw response.
+Nexa 1.3 removes `NXRequestBuilder.raw()`, `NXTypedRequestBuilder.raw()`, the public `NXRetryPolicy` constructor, `NXRetryPolicy.Backoff`, `NXRetryPolicy.Jitter`, and `.retry(_:)`. `NXRetryPolicy` remains an internal implementation detail. Use `NXRequestBuilder.send()` for a raw response and `.retry(maxAttempts:backoff:retryableStatusCodes:allowing:maximumServerDelay:jitter:)` for retry behavior; `maxAttempts` defaults to `3`.
+
+An ``NXHTTPInterceptor`` can change a request URL, headers, and body through ``NXRequestExecutionContext/replacingRequest(_:)``, but must preserve the configured HTTP method. A different method ends with ``NXError/invalidRequest(_:)`` before later interceptors, logging, caching, or transport.
 
 `NXEndpoint` retains its typed configuration and decoded `client.send(_:)` path. It does not provide a raw-response execution API; construct the required request directly with `NXRequestBuilder` when raw response handling is required.
 
@@ -108,7 +113,8 @@ let user = try await client.send(UserEndpoint(identifier: 42))
 - ``NXRawResponse``
 - ``NXError``
 - ``NXValidationPolicy``
-- ``NXRetryPolicy``
+- ``NXRetryBackoff``
+- ``NXRetryJitter``
 - ``NXURLSessionTransport``
 
 ### Extension Points

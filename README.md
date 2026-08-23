@@ -78,7 +78,8 @@ The rest of the public surface is made of extension points for auth, logging, te
 | `NXEndpoint` | When an endpoint definition should be reusable and carry its response type with it | `try await client.send(UserEndpoint(identifier: 1))` |
 | `NXClientConfiguration` | When shared headers, transport, logger, auth, encoder, decoder, or interceptors should be configured once | `NXClientConfiguration(baseURL: url, authTokenProvider: yourAuthTokenProvider)` |
 | `NXCache` | When successful unauthenticated `GET` responses should be reused for a short TTL | `NXClientConfiguration(baseURL: url, cache: .memory(ttl: 0.3))` |
-| `NXRetryPolicy` | When a request should retry on retryable status codes or transport failures | `.retry(.init(maxAttempts: 3))` |
+| `NXRetryBackoff` | When retry delays need fixed or exponential behavior | `.retry(maxAttempts: 3, backoff: .fixed(0))` |
+| `NXRetryJitter` | When local retry delay randomization is needed | `.retry(maxAttempts: 3, jitter: .full)` |
 | `NXValidationPolicy` | When the accepted status codes differ from the default `200..<300` | `.validate(.statusCodes([200, 201, 204]))` |
 | `NXHTTPTransport` | When you need stubs in tests or want to replace the transport implementation | `NXClientConfiguration(baseURL: url, transport: yourStubTransport)` |
 | `NXHTTPInterceptor` | When you need cross-cutting request behavior such as tracing or header injection | `.intercept(yourInterceptor)` |
@@ -346,23 +347,30 @@ Nexa currently supports:
 
 ## Retry Policy
 
-`NXRetryPolicy` retries `GET`, `HEAD`, `PUT`, `DELETE`, and `OPTIONS` by default when a configured retryable status code or transport error occurs. `POST` and `PATCH` remain single-attempt requests unless you explicitly add them to `retryableMethods` for an endpoint that safely accepts repeated requests.
+`.retry(...)` retries `GET`, `HEAD`, `PUT`, `DELETE`, and `OPTIONS` by default when a configured retryable status code or transport error occurs. It uses three attempts when `maxAttempts` is omitted. `POST` and `PATCH` remain single-attempt requests unless you explicitly add them through `allowing` for an endpoint that safely accepts repeated requests.
 
-For retryable `429` and `503` responses, Nexa accepts `Retry-After` delay seconds and HTTP-date values. A valid server value replaces local backoff, is capped by `maximumServerDelay` (60 seconds by default), and is recorded through `NXRetryLog`. `Jitter.full` changes only local backoff delays and never shortens a server-provided delay.
+For retryable `429` and `503` responses, Nexa accepts `Retry-After` delay seconds and HTTP-date values. A valid server value replaces local backoff, is capped by `maximumServerDelay` (60 seconds by default), and is recorded through `NXRetryLog`. `NXRetryJitter.full` changes only local backoff delays and never shortens a server-provided delay.
 
 ```swift
-let retryPolicy = NXRetryPolicy(
-	maxAttempts: 3,
-	retryableMethods: [.get, .post],
-	maximumServerDelay: 30,
-	jitter: .none
-)
-
 let user = try await client
 	.post("/users")
-	.retry(retryPolicy)
+	.retry(
+		maxAttempts: 3,
+		backoff: .fixed(0),
+		allowing: [.post],
+		maximumServerDelay: 30,
+		jitter: .none
+	)
 	.send(as: User.self)
 ```
+
+## Nexa 1.3 Migration
+
+The public `NXRetryPolicy` constructor, `NXRetryPolicy.Backoff`, `NXRetryPolicy.Jitter`, and `.retry(_:)` are removed in Nexa 1.3. Nexa keeps `NXRetryPolicy` as an internal implementation detail. Use `.retry(maxAttempts:backoff:retryableStatusCodes:allowing:maximumServerDelay:jitter:)` with `NXRetryBackoff` and `NXRetryJitter` instead; `maxAttempts` defaults to `3`.
+
+## Interceptor Method Contract
+
+`NXHTTPInterceptor.replacingRequest(_:)` can change a request URL, headers, and body, but the request method must remain equal to the configured method. A different method ends the chain with `NXError.invalidRequest` before later interceptors, logging, caching, or transport.
 
 ## Development
 

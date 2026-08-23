@@ -32,8 +32,7 @@ struct NXRetryInterceptorTests {
 
     @Test("명시 허용한 POST는 전송 오류 뒤 재시도한다")
     func optInMethodRetriesAfterTransportFailure() async {
-        var policy = NXRetryPolicy(maxAttempts: 2)
-        policy.retryableMethods.insert(.post)
+        let policy = NXRetryPolicy(maxAttempts: 2, allowing: [.post])
 
         #expect(await attemptCount(method: .post, policy: policy) == 2)
     }

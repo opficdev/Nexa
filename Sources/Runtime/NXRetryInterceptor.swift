@@ -22,7 +22,7 @@ struct NXRetryInterceptor: NXHTTPInterceptor {
             return try await next(context)
         }
 
-        guard retryPolicy.retryableMethods.contains(context.specification.method) else {
+        guard retryPolicy.allowedMethods.contains(context.specification.method) else {
             return try await next(context)
         }
 

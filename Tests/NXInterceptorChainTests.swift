@@ -84,7 +84,7 @@ struct NXInterceptorChainTests {
 
         let user = try await client
             .get("/users")
-            .retry(NXRetryPolicy(maxAttempts: 3))
+            .retry(maxAttempts: 3)
             .send(as: UserDTO.self)
 
         #expect(user == UserDTO(id: 3, name: "retry"))
