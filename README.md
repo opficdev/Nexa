@@ -17,6 +17,7 @@ Nexa is a SwiftUI-inspired declarative networking library built on `URLSession`.
 - [Endpoint API](#endpoint-api)
 - [Request Migration](#request-migration)
 - [Configuration](#configuration)
+- [Response Cache](#response-cache)
 - [Retry Policy](#retry-policy)
 - [Development](#development)
 - [Testing](#testing)
@@ -32,7 +33,7 @@ Nexa is a SwiftUI-inspired declarative networking library built on `URLSession`.
 - [x] Built-in authentication and token refresh flow through `NXAuthTokenProvider`
 - [x] Retry policies with fixed and exponential backoff
 - [x] Response validation and server error decoding
-- [x] Memory response cache for successful `GET` responses and in-flight identical requests
+- [x] Memory response cache with optional validator revalidation for successful `GET` responses and in-flight identical requests
 - [x] Logger hooks and transport abstraction for testing
 
 ## Requirements
@@ -77,7 +78,7 @@ The rest of the public surface is made of extension points for auth, logging, te
 | `NXTypedRequestBuilder<Response>` | Endpoint configuration compatibility boundary | `func configure(_ builder: NXTypedRequestBuilder<User>) -> NXTypedRequestBuilder<User>` |
 | `NXEndpoint` | When an endpoint definition should be reusable and carry its response type with it | `try await client.send(UserEndpoint(identifier: 1))` |
 | `NXClientConfiguration` | When shared headers, transport, logger, auth, encoder, decoder, or interceptors should be configured once | `NXClientConfiguration(baseURL: url, authTokenProvider: yourAuthTokenProvider)` |
-| `NXCache` | When successful unauthenticated `GET` responses should be reused for a short TTL | `NXClientConfiguration(baseURL: url, cache: .memory(ttl: 0.3))` |
+| `NXCache` | When successful unauthenticated `GET` responses should be reused for a TTL or revalidated with validators | `NXClientConfiguration(baseURL: url, cache: .revalidatingMemory(ttl: 300))` |
 | `NXRetryBackoff` | When retry delays need fixed or exponential behavior | `.retry(maxAttempts: 3, backoff: .fixed(0))` |
 | `NXRetryJitter` | When local retry delay randomization is needed | `.retry(maxAttempts: 3, jitter: .full)` |
 | `NXValidationPolicy` | When the accepted status codes differ from the default `200..<300` | `.validate(.statusCodes([200, 201, 204]))` |
@@ -344,6 +345,35 @@ Nexa currently supports:
 - Automatic auth header injection for `authorized()` requests
 - Token refresh and retry handling
 - Custom transports for stubbing and isolated tests
+
+## Response Cache
+
+`NXCache.memory(ttl:)` reuses successful unauthenticated `GET` responses for the given TTL and combines identical requests while the first request is in progress. It does not add conditional headers after the TTL expires.
+
+`NXCache.revalidatingMemory(ttl:)` keeps the same cache behavior and additionally revalidates an expired cached `200` response when it has an `ETag` or `Last-Modified` header. Nexa adds `If-None-Match` and `If-Modified-Since` after creating the cache key. A bodyless `304 Not Modified` with the matching validator returns the cached body as a `200` response. A different validator or a body-bearing `304` discards the stale response and follows normal response validation. A changed `200` replaces the cached body and validator. Cached `201`, `204`, and other successful non-`200` responses keep the normal TTL-expiry reload path.
+
+```swift
+let client = NXAPIClient(
+	configuration: NXClientConfiguration(
+		baseURL: URL(string: "https://api.example.com")!,
+		cache: .revalidatingMemory(ttl: 300)
+	)
+)
+```
+
+The cache and in-flight request store belong to an `NXAPIClient` instance. Keep a client in a service or dependency container when requests should share cache state. Creating a new `NXAPIClient(configuration:)` creates an independent store. A copy of an existing client value shares the original store.
+
+```swift
+struct UserService {
+	private let client: NXAPIClient
+
+	init(client: NXAPIClient) {
+		self.client = client
+	}
+}
+```
+
+Nexa does not implement `Vary`, disk cache, full `Cache-Control` interpretation, or stale-if-error behavior. Adding `.revalidatingMemory(ttl:)` adds an `NXCache` enum case, so update exhaustive `switch` statements over `NXCache` when recompiling.
 
 ## Retry Policy
 
