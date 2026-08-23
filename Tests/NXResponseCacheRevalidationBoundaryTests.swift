@@ -77,6 +77,45 @@ struct NXResponseCacheRevalidationBoundaryTests {
         #expect(await attemptCounter.value() == 2)
     }
 
+    @Test("재검증 response URL을 합성 cache response에 보존한다")
+    func revalidationResponseURLIsStoredWithSynthesizedResponse() async throws {
+        let attemptCounter = AttemptCounter()
+        let revalidationURL = URL(string: "https://example.com/redirected/users")!
+        let client = makeClient(
+            transport: ClosureTransport { request in
+                let attemptNumber = await attemptCounter.increment()
+
+                if attemptNumber == 1 {
+                    return makeRawResponse(
+                        statusCode: 200,
+                        body: #"{"id":1,"name":"cached"}"#,
+                        path: "/users",
+                        headers: ["ETag": "v1"]
+                    )
+                }
+
+                #expect(request.value(forHTTPHeaderField: "If-None-Match") == "v1")
+                return makeRawResponse(
+                    statusCode: 304,
+                    body: "",
+                    path: "/redirected/users",
+                    headers: ["ETag": "v1"]
+                )
+            }
+        )
+
+        _ = try await client.get("/users").send()
+        try await Task.sleep(nanoseconds: 20_000_000)
+        let revalidatedResponse = try await client.get("/users").send()
+        let cachedResponse = try await client.get("/users").send()
+
+        #expect(revalidatedResponse.data == Data(#"{"id":1,"name":"cached"}"#.utf8))
+        #expect(revalidatedResponse.response.statusCode == 200)
+        #expect(revalidatedResponse.response.url == revalidationURL)
+        #expect(cachedResponse.response.url == revalidationURL)
+        #expect(await attemptCounter.value() == 2)
+    }
+
     private func makeClient(
         transport: any NXHTTPTransport,
         logger: any NXLogger = NXNoopLogger(),

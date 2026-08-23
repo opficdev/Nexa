@@ -74,7 +74,7 @@ struct NXResponseCacheInterceptor: NXHTTPInterceptor {
                   cached: revalidationContext.validators,
                   response: rawResponse.response
               ),
-              let url = revalidationContext.cachedResponse.response.url ?? rawResponse.response.url,
+              let url = rawResponse.response.url ?? revalidationContext.cachedResponse.response.url,
               let response = HTTPURLResponse(
                   url: url,
                   statusCode: 200,
