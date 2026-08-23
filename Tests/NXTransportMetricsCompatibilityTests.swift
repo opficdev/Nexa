@@ -37,6 +37,20 @@ struct NXTransportMetricsCompatibilityTests {
         #expect(await logEvents(from: logger) == [.requestStart, .requestEnd, .requestStart, .requestEnd])
     }
 
+    @Test("URLSession initializer member와 metrics initializer를 함께 제공한다")
+    func transportInitializersPreserveSourceCompatibility() {
+        let factory: (URLSession) -> NXURLSessionTransport = NXURLSessionTransport.init(urlSession:)
+        let session = URLSession(configuration: .ephemeral)
+        let observer = MetricsObserverStub()
+        let factoryTransport = factory(session)
+        let directTransport = NXURLSessionTransport(urlSession: session)
+        let metricsTransport = NXURLSessionTransport(metricsObserver: observer)
+
+        #expect(factoryTransport.urlSession === session)
+        #expect(directTransport.urlSession === session)
+        #expect(metricsTransport.metricsObserver != nil)
+    }
+
     private func logEvents(from logger: MemoryLogger) async -> [LogEvent] {
         await logger.allEvents().compactMap { event in
             switch event {
@@ -61,4 +75,8 @@ private enum LogEvent: Equatable {
     case requestFailure
     case retry
     case authRefresh
+}
+
+private actor MetricsObserverStub: NXNetworkMetricsObserver {
+    func record(_ metrics: NXNetworkMetrics) async {}
 }

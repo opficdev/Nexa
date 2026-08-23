@@ -12,13 +12,21 @@ public struct NXURLSessionTransport: NXHTTPTransport, Sendable {
     let urlSession: URLSession
     let metricsObserver: (any NXNetworkMetricsObserver)?
 
-    /// Creates a transport that sends requests through a `URLSession`.
+    /// Creates a transport that sends requests through a `URLSession` without collecting metrics.
+    ///
+    /// - Parameter urlSession: Session used to perform requests.
+    public init(urlSession: URLSession = .shared) {
+        self.urlSession = urlSession
+        metricsObserver = nil
+    }
+
+    /// Creates a transport that sends requests through a `URLSession` and records metrics snapshots.
     ///
     /// - Parameter urlSession: Session used to perform requests.
     /// - Parameter metricsObserver: Observer that receives URLSession metrics snapshots.
     public init(
         urlSession: URLSession = .shared,
-        metricsObserver: (any NXNetworkMetricsObserver)? = nil
+        metricsObserver: any NXNetworkMetricsObserver
     ) {
         self.urlSession = urlSession
         self.metricsObserver = metricsObserver
