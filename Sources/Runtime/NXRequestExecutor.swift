@@ -11,6 +11,7 @@ enum NXRequestExecutor {
     static func executeRaw(
         clientConfiguration: NXClientConfiguration,
         responseCacheStore: NXResponseCacheStore?,
+        authRefreshCoordinator: NXAuthRefreshCoordinator,
         requestSpec: RequestSpec,
         retryExecutionDependencies: NXRetryExecutionDependencies = .live
     ) async throws -> NXRawResponse {
@@ -25,7 +26,8 @@ enum NXRequestExecutor {
                 attemptNumber: 1,
                 userInfo: requestSpec.userInfo,
                 specification: requestSpec,
-                clientConfiguration: clientConfiguration
+                clientConfiguration: clientConfiguration,
+                authRefreshCoordinator: authRefreshCoordinator
             )
             let rawResponse = try await NXInterceptorChain.execute(
                 context: context,
@@ -53,12 +55,14 @@ enum NXRequestExecutor {
     static func executeDecode<T: Decodable>(
         clientConfiguration: NXClientConfiguration,
         responseCacheStore: NXResponseCacheStore?,
+        authRefreshCoordinator: NXAuthRefreshCoordinator,
         requestSpec: RequestSpec,
         responseType: T.Type
     ) async throws -> T {
         let rawResponse = try await executeRaw(
             clientConfiguration: clientConfiguration,
             responseCacheStore: responseCacheStore,
+            authRefreshCoordinator: authRefreshCoordinator,
             requestSpec: requestSpec
         )
 

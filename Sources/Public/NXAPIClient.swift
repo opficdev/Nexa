@@ -39,12 +39,14 @@ import Foundation
 public struct NXAPIClient: Sendable {
     private let configuration: NXClientConfiguration
     private let responseCacheStore: NXResponseCacheStore?
+    private let authRefreshCoordinator: NXAuthRefreshCoordinator
 
     /// Creates a client that uses the provided configuration for all requests.
     ///
     /// - Parameter configuration: Shared settings such as the base URL, transport, logger, and auth provider.
     public init(configuration: NXClientConfiguration) {
         self.configuration = configuration
+        authRefreshCoordinator = NXAuthRefreshCoordinator()
         responseCacheStore = switch configuration.cache {
         case .disabled:
             nil
@@ -171,6 +173,7 @@ public struct NXAPIClient: Sendable {
         NXRequestBuilder(
             clientConfiguration: configuration,
             responseCacheStore: responseCacheStore,
+            authRefreshCoordinator: authRefreshCoordinator,
             requestSpec: RequestSpec(method: method, path: path)
         )
     }

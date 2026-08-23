@@ -52,7 +52,8 @@ struct NXRetryInterceptorTests {
             attemptNumber: 1,
             userInfo: specification.userInfo,
             specification: specification,
-            clientConfiguration: configuration
+            clientConfiguration: configuration,
+            authRefreshCoordinator: NXAuthRefreshCoordinator()
         )
 
         do {
