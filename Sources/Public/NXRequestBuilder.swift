@@ -150,7 +150,7 @@ public struct NXRequestBuilder: Sendable {
     /// - Returns: Updated request builder.
     public func retry(_ policy: NXRetryPolicy) -> Self {
         modifying { requestSpec in
-            requestSpec.retryPolicy = policy
+            requestSpec.retryPolicy = RetryPolicy(policy)
         }
     }
 

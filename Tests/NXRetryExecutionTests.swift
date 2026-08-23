@@ -30,7 +30,7 @@ struct NXRetryExecutionTests {
 
         _ = try await executeRaw(
             configuration: configuration,
-            policy: NXRetryPolicy(maxAttempts: 2),
+            policy: RetryPolicy(maxAttempts: 2),
             dependencies: noDelayDependencies()
         )
 
@@ -62,7 +62,7 @@ struct NXRetryExecutionTests {
 
         _ = try await executeRaw(
             configuration: configuration,
-            policy: NXRetryPolicy(maxAttempts: 2),
+            policy: RetryPolicy(maxAttempts: 2),
             dependencies: noDelayDependencies()
         )
 
@@ -87,7 +87,7 @@ struct NXRetryExecutionTests {
                 throw URLError(.timedOut)
             }
         )
-        let policy = NXRetryPolicy(maxAttempts: 2, backoff: .fixed(1))
+        let policy = RetryPolicy(maxAttempts: 2, backoff: .fixed(1))
         let task = Task {
             try await executeRaw(
                 configuration: configuration,
@@ -125,7 +125,7 @@ struct NXRetryExecutionTests {
 
     private func executeRaw(
         configuration: NXClientConfiguration,
-        policy: NXRetryPolicy,
+        policy: RetryPolicy,
         dependencies: NXRetryExecutionDependencies
     ) async throws -> NXRawResponse {
         var specification = RequestSpec(method: .get, path: "/users")

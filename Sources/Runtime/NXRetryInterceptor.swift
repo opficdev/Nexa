@@ -22,7 +22,7 @@ struct NXRetryInterceptor: NXHTTPInterceptor {
             return try await next(context)
         }
 
-        guard retryPolicy.retryableMethods.contains(context.specification.method) else {
+        guard retryPolicy.allowedMethods.contains(context.specification.method) else {
             return try await next(context)
         }
 
@@ -96,7 +96,7 @@ struct NXRetryInterceptor: NXHTTPInterceptor {
 
     private func retryDelay(
         after response: NXRawResponse,
-        retryPolicy: NXRetryPolicy,
+        retryPolicy: RetryPolicy,
         attemptNumber: Int
     ) -> TimeInterval {
         if let serverDelay = serverDelay(from: response.response) {
@@ -234,7 +234,7 @@ struct NXRetryInterceptor: NXHTTPInterceptor {
     }
 
     private func localDelay(
-        retryPolicy: NXRetryPolicy,
+        retryPolicy: RetryPolicy,
         attemptNumber: Int
     ) -> TimeInterval {
         let delay = retryPolicy.backoff.delay(forAttempt: attemptNumber)

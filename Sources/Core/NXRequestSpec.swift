@@ -20,7 +20,7 @@ struct RequestSpec: Sendable {
     var body: NXRequestBody?
     var timeout: TimeInterval?
     var authRequirement: NXAuthRequirement
-    var retryPolicy: NXRetryPolicy?
+    var retryPolicy: RetryPolicy?
     var validationPolicy: NXValidationPolicy
     var requestInterceptors: [any NXHTTPInterceptor]
     var userInfo: [String: String]

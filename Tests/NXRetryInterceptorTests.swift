@@ -19,7 +19,7 @@ struct NXRetryInterceptorTests {
         .options
     ])
     func idempotentMethodsRetryAfterTransportFailure(method: NXHTTPMethod) async {
-        #expect(await attemptCount(method: method, policy: NXRetryPolicy(maxAttempts: 2)) == 2)
+        #expect(await attemptCount(method: method, policy: RetryPolicy(maxAttempts: 2)) == 2)
     }
 
     @Test("POST와 PATCH는 명시 허용 전 재시도하지 않는다", arguments: [
@@ -27,18 +27,17 @@ struct NXRetryInterceptorTests {
         .patch
     ])
     func nonIdempotentMethodsDoNotRetryByDefault(method: NXHTTPMethod) async {
-        #expect(await attemptCount(method: method, policy: NXRetryPolicy(maxAttempts: 2)) == 1)
+        #expect(await attemptCount(method: method, policy: RetryPolicy(maxAttempts: 2)) == 1)
     }
 
     @Test("명시 허용한 POST는 전송 오류 뒤 재시도한다")
     func optInMethodRetriesAfterTransportFailure() async {
-        var policy = NXRetryPolicy(maxAttempts: 2)
-        policy.retryableMethods.insert(.post)
+        let policy = RetryPolicy(maxAttempts: 2, allowing: [.post])
 
         #expect(await attemptCount(method: .post, policy: policy) == 2)
     }
 
-    private func attemptCount(method: NXHTTPMethod, policy: NXRetryPolicy) async -> Int {
+    private func attemptCount(method: NXHTTPMethod, policy: RetryPolicy) async -> Int {
         let counter = AttemptCounter()
         var request = URLRequest(url: URL(string: "https://example.com/users")!)
         request.httpMethod = method.rawValue

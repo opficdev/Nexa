@@ -20,7 +20,7 @@ struct NXRetryAfterParsingTests {
         let serverDate = calendar.date(
             from: DateComponents(year: 2060, month: 11, day: 6, hour: 8, minute: 49, second: 37)
         )!
-        let policy = NXRetryPolicy(
+        let policy = RetryPolicy(
             maxAttempts: 2,
             maximumServerDelay: .greatestFiniteMagnitude
         )
@@ -38,7 +38,7 @@ struct NXRetryAfterParsingTests {
     func unsupportedTimezoneUsesLocalBackoff() async throws {
         let delay = try await retryDelay(
             header: "Thu, 01 Jan 1970 00:02:00 PST",
-            policy: NXRetryPolicy(maxAttempts: 2, backoff: .fixed(4)),
+            policy: RetryPolicy(maxAttempts: 2, backoff: .fixed(4)),
             now: Date.distantPast
         )
 
@@ -49,7 +49,7 @@ struct NXRetryAfterParsingTests {
     func pastHTTPDateUsesZeroDelay() async throws {
         let delay = try await retryDelay(
             header: "Thu, 01 Jan 1970 00:00:00 GMT",
-            policy: NXRetryPolicy(maxAttempts: 2),
+            policy: RetryPolicy(maxAttempts: 2),
             now: Date(timeIntervalSince1970: 1)
         )
 
@@ -60,7 +60,7 @@ struct NXRetryAfterParsingTests {
     func negativeRetryAfterUsesLocalBackoff() async throws {
         let delay = try await retryDelay(
             header: "-1",
-            policy: NXRetryPolicy(maxAttempts: 2, backoff: .fixed(4)),
+            policy: RetryPolicy(maxAttempts: 2, backoff: .fixed(4)),
             now: Date.distantPast
         )
 
@@ -71,7 +71,7 @@ struct NXRetryAfterParsingTests {
     func signedRetryAfterUsesLocalBackoff() async throws {
         let delay = try await retryDelay(
             header: "+1",
-            policy: NXRetryPolicy(maxAttempts: 2, backoff: .fixed(4)),
+            policy: RetryPolicy(maxAttempts: 2, backoff: .fixed(4)),
             now: Date.distantPast
         )
 
@@ -82,7 +82,7 @@ struct NXRetryAfterParsingTests {
     func overflowingRetryAfterUsesServerDelayCap() async throws {
         let delay = try await retryDelay(
             header: String(repeating: "9", count: 100),
-            policy: NXRetryPolicy(maxAttempts: 2, maximumServerDelay: 60),
+            policy: RetryPolicy(maxAttempts: 2, maximumServerDelay: 60),
             now: Date.distantPast
         )
 
@@ -93,7 +93,7 @@ struct NXRetryAfterParsingTests {
     func retryAfterOutsideSupportedStatusUsesLocalBackoff() async throws {
         let delay = try await retryDelay(
             header: "120",
-            policy: NXRetryPolicy(maxAttempts: 2, backoff: .fixed(4)),
+            policy: RetryPolicy(maxAttempts: 2, backoff: .fixed(4)),
             now: Date.distantPast,
             statusCode: 500
         )
@@ -109,7 +109,7 @@ struct NXRetryAfterParsingTests {
         let dependencies = await recorder.dependencies(now: Date.distantPast)
         let request = URLRequest(url: URL(string: "https://example.com/users")!)
         var specification = RequestSpec(method: .get, path: "/users")
-        specification.retryPolicy = NXRetryPolicy(maxAttempts: 2, backoff: .fixed(4))
+        specification.retryPolicy = RetryPolicy(maxAttempts: 2, backoff: .fixed(4))
         let context = NXRequestExecutionContext(
             request: request,
             requestIdentifier: specification.requestIdentifier,
@@ -139,7 +139,7 @@ struct NXRetryAfterParsingTests {
 
     private func retryDelay(
         header: String,
-        policy: NXRetryPolicy,
+        policy: RetryPolicy,
         now: Date,
         statusCode: Int = 429
     ) async throws -> TimeInterval {
