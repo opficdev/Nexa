@@ -17,6 +17,7 @@ Nexa는 `URLSession` 기반의 SwiftUI 스타일 선언형 네트워킹 라이�
 - [Endpoint API](#endpoint-api)
 - [요청 전환](#요청-전환)
 - [설정](#설정)
+- [인증 토큰 갱신](#인증-토큰-갱신)
 - [응답 cache](#응답-cache)
 - [재시도 정책](#재시도-정책)
 - [개발](#개발)
@@ -31,6 +32,7 @@ Nexa는 `URLSession` 기반의 SwiftUI 스타일 선언형 네트워킹 라이�
 - [x] 컴파일 타임 응답 타입을 갖는 Endpoint 기반 API
 - [x] 요청 단위 및 전역 인터셉터 체인
 - [x] `NXAuthTokenProvider`를 통한 인증 및 토큰 갱신 흐름 내장
+- [x] 같은 client의 동시 `401` 응답을 위한 진행 중 토큰 갱신 공유
 - [x] Fixed backoff 및 exponential backoff 기반 재시도 정책
 - [x] 응답 유효성 검사 및 서버 에러 디코딩
 - [x] 성공한 `GET` 응답과 진행 중인 동일 요청을 위한 validator 재검증 선택형 memory response cache
@@ -345,6 +347,14 @@ let client = NXAPIClient(configuration: configuration)
 - `.authorized()` 요청에 대한 자동 인증 헤더 주입
 - 토큰 갱신 및 재시도 처리
 - 스터빙 및 격리 테스트를 위한 커스텀 transport
+
+## 인증 토큰 갱신
+
+하나의 `NXAPIClient`에서 생성한 `.authorized()` 요청이 동시에 `401` 응답을 받으면 진행 중인 토큰 갱신 결과 하나를 공유합니다. 해당 client의 값 복사본과 여기서 파생한 builder도 같은 갱신을 공유합니다. 별도로 생성한 `NXAPIClient`는 독립된 갱신 수명을 가집니다.
+
+`NXAuthTokenProvider`의 `currentAccessToken()`, `refreshAccessToken()` 요구 사항은 바뀌지 않습니다. 각 요청은 `nil`이 아닌 갱신 결과 뒤 최대 한 번만 재전송합니다. `nil` 갱신 결과는 해당 요청의 원래 `401` 응답을 반환하고, 갱신 오류는 Nexa의 기존 오류 매핑을 따릅니다.
+
+한 호출자의 취소는 공유 갱신이나 다른 대기 요청을 취소하지 않습니다. `NXAuthRefreshLog`는 실제 갱신 한 번당 한 번 기록되고, `requestIdentifier`는 해당 갱신을 시작한 요청의 식별자입니다.
 
 ## 응답 cache
 

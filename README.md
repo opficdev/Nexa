@@ -17,6 +17,7 @@ Nexa is a SwiftUI-inspired declarative networking library built on `URLSession`.
 - [Endpoint API](#endpoint-api)
 - [Request Migration](#request-migration)
 - [Configuration](#configuration)
+- [Authentication Refresh](#authentication-refresh)
 - [Response Cache](#response-cache)
 - [Retry Policy](#retry-policy)
 - [Development](#development)
@@ -31,6 +32,7 @@ Nexa is a SwiftUI-inspired declarative networking library built on `URLSession`.
 - [x] Endpoint-based API with compile-time response typing
 - [x] Request-level and global interceptor chains
 - [x] Built-in authentication and token refresh flow through `NXAuthTokenProvider`
+- [x] One shared in-flight token refresh for concurrent `401` responses from the same client
 - [x] Retry policies with fixed and exponential backoff
 - [x] Response validation and server error decoding
 - [x] Memory response cache with optional validator revalidation for successful `GET` responses and in-flight identical requests
@@ -345,6 +347,14 @@ Nexa currently supports:
 - Automatic auth header injection for `authorized()` requests
 - Token refresh and retry handling
 - Custom transports for stubbing and isolated tests
+
+## Authentication Refresh
+
+Concurrent `401` responses from `.authorized()` requests created by one `NXAPIClient` share one in-progress token refresh. Copies of that client and builders derived from it share the same refresh. A separately initialized `NXAPIClient` has an independent refresh lifetime.
+
+`NXAuthTokenProvider` keeps the same `currentAccessToken()` and `refreshAccessToken()` requirements. Each request retries at most once after a non-`nil` refresh result. A `nil` refresh result returns the request's original `401` response, and a refresh error follows Nexa's existing error mapping.
+
+Cancelling one caller does not cancel the shared refresh or the other waiting requests. `NXAuthRefreshLog` is emitted once per actual refresh; its `requestIdentifier` is the identifier of the request that started that refresh.
 
 ## Response Cache
 

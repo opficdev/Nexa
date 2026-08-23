@@ -134,6 +134,7 @@ struct NXRetryExecutionTests {
         return try await NXRequestExecutor.executeRaw(
             clientConfiguration: configuration,
             responseCacheStore: nil,
+            authRefreshCoordinator: NXAuthRefreshCoordinator(),
             requestSpec: specification,
             retryExecutionDependencies: dependencies
         )

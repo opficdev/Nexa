@@ -48,6 +48,14 @@ let response = try await client
 	.send()
 ```
 
+## Authentication Refresh
+
+When `.authorized()` requests from one ``NXAPIClient`` receive concurrent `401` responses, Nexa shares one in-progress refresh result. Copies of that client and request builders derived from it share the same refresh; separately initialized clients do not.
+
+``NXAuthTokenProvider`` keeps the same `currentAccessToken()` and `refreshAccessToken()` requirements. Each request retries at most once after a non-`nil` refresh result. A `nil` result returns that request's original `401` response, and a refresh error follows the existing error-mapping path.
+
+Cancelling one caller does not cancel the shared refresh or the other waiting requests. Nexa emits one ``NXAuthRefreshLog`` for each actual refresh. Its `requestIdentifier` identifies the request that started the refresh.
+
 ## Response Cache
 
 ``NXCache/memory(ttl:)`` reuses successful unauthenticated `GET` responses for its TTL and shares an in-flight identical request. ``NXCache/revalidatingMemory(ttl:)`` additionally revalidates an expired cached `200` response that has an `ETag` or `Last-Modified` header.

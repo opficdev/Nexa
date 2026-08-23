@@ -123,7 +123,8 @@ struct NXRetryDelayTests {
             attemptNumber: 1,
             userInfo: specification.userInfo,
             specification: specification,
-            clientConfiguration: configuration
+            clientConfiguration: configuration,
+            authRefreshCoordinator: NXAuthRefreshCoordinator()
         )
 
         return try await NXRetryInterceptor(dependencies: dependencies).intercept(context: context) { _ in

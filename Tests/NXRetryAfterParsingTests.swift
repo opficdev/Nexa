@@ -119,7 +119,8 @@ struct NXRetryAfterParsingTests {
             clientConfiguration: NXClientConfiguration(
                 baseURL: URL(string: "https://example.com")!,
                 logger: logger
-            )
+            ),
+            authRefreshCoordinator: NXAuthRefreshCoordinator()
         )
 
         let response = try await NXRetryInterceptor(dependencies: dependencies).intercept(context: context) { _ in
@@ -156,7 +157,8 @@ struct NXRetryAfterParsingTests {
             specification: specification,
             clientConfiguration: NXClientConfiguration(
                 baseURL: URL(string: "https://example.com")!
-            )
+            ),
+            authRefreshCoordinator: NXAuthRefreshCoordinator()
         )
 
         _ = try await NXRetryInterceptor(dependencies: dependencies).intercept(context: context) { context in

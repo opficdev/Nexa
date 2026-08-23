@@ -56,6 +56,7 @@ public struct NXRequestExecutionContext: Sendable {
 
     let specification: RequestSpec
     let clientConfiguration: NXClientConfiguration
+    let authRefreshCoordinator: NXAuthRefreshCoordinator
 
     /// Returns a copy of the context with a different request value.
     ///
@@ -70,7 +71,8 @@ public struct NXRequestExecutionContext: Sendable {
             attemptNumber: attemptNumber,
             userInfo: userInfo,
             specification: specification,
-            clientConfiguration: clientConfiguration
+            clientConfiguration: clientConfiguration,
+            authRefreshCoordinator: authRefreshCoordinator
         )
     }
 
@@ -81,7 +83,8 @@ public struct NXRequestExecutionContext: Sendable {
             attemptNumber: attemptNumber,
             userInfo: userInfo,
             specification: specification,
-            clientConfiguration: clientConfiguration
+            clientConfiguration: clientConfiguration,
+            authRefreshCoordinator: authRefreshCoordinator
         )
     }
 }

@@ -35,15 +35,18 @@ import Foundation
 public struct NXRequestBuilder: Sendable {
     private let clientConfiguration: NXClientConfiguration
     private let responseCacheStore: NXResponseCacheStore?
+    private let authRefreshCoordinator: NXAuthRefreshCoordinator
     private let requestSpec: RequestSpec
 
     init(
         clientConfiguration: NXClientConfiguration,
         responseCacheStore: NXResponseCacheStore?,
+        authRefreshCoordinator: NXAuthRefreshCoordinator,
         requestSpec: RequestSpec
     ) {
         self.clientConfiguration = clientConfiguration
         self.responseCacheStore = responseCacheStore
+        self.authRefreshCoordinator = authRefreshCoordinator
         self.requestSpec = requestSpec
     }
 
@@ -208,6 +211,7 @@ public struct NXRequestBuilder: Sendable {
         try await NXRequestExecutor.executeRaw(
             clientConfiguration: clientConfiguration,
             responseCacheStore: responseCacheStore,
+            authRefreshCoordinator: authRefreshCoordinator,
             requestSpec: requestSpec
         )
     }
@@ -240,6 +244,7 @@ public struct NXRequestBuilder: Sendable {
         try await NXRequestExecutor.executeDecode(
             clientConfiguration: clientConfiguration,
             responseCacheStore: responseCacheStore,
+            authRefreshCoordinator: authRefreshCoordinator,
             requestSpec: requestSpec,
             responseType: Response.self
         )
@@ -255,6 +260,7 @@ public struct NXRequestBuilder: Sendable {
         return Self(
             clientConfiguration: clientConfiguration,
             responseCacheStore: responseCacheStore,
+            authRefreshCoordinator: authRefreshCoordinator,
             requestSpec: copiedRequestSpec
         )
     }

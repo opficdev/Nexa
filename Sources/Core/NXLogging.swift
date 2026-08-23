@@ -118,7 +118,7 @@ public struct NXRetryLog: Sendable {
 
 /// Structured payload emitted after an auth token refresh attempt finishes.
 public struct NXAuthRefreshLog: Sendable {
-    /// Stable identifier shared by all attempts of the same logical request.
+    /// Identifier of the request that started the refresh.
     public let requestIdentifier: UUID
     /// Whether the refresh attempt succeeded.
     public let succeeded: Bool

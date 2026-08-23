@@ -40,7 +40,9 @@ struct NXInterceptorChainTests {
         #expect(user == UserDTO(id: 1, name: "opfic"))
         #expect(await attemptCounter.value() == 2)
         #expect(await tokenProvider.refreshCount() == 1)
-        #expect(await logger.authRefreshLogs().count == 1)
+        let logs = await logger.authRefreshLogs()
+        #expect(logs.count == 1)
+        #expect(logs[0].succeeded)
     }
 
     @Test("retry 정책이 없으면 재시도하지 않는다")

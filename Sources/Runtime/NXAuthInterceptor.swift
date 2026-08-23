@@ -28,26 +28,13 @@ struct NXAuthInterceptor: NXHTTPInterceptor {
             return firstResponse
         }
 
-        guard let refreshedAccessToken = try await authTokenProvider.refreshAccessToken() else {
-            await context.clientConfiguration.logger.log(
-                .authRefresh(
-                    NXAuthRefreshLog(
-                        requestIdentifier: context.requestIdentifier,
-                        succeeded: false
-                    )
-                )
-            )
+        guard let refreshedAccessToken = try await context.authRefreshCoordinator.refreshAccessToken(
+            using: authTokenProvider,
+            logger: context.clientConfiguration.logger,
+            requestIdentifier: context.requestIdentifier
+        ) else {
             return firstResponse
         }
-
-        await context.clientConfiguration.logger.log(
-            .authRefresh(
-                NXAuthRefreshLog(
-                    requestIdentifier: context.requestIdentifier,
-                    succeeded: true
-                )
-            )
-        )
 
         return try await next(context.replacingRequest(withBearerToken: refreshedAccessToken))
     }
