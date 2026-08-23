@@ -77,7 +77,7 @@ private actor MetricsObserverSpy: NXNetworkMetricsObserver {
     }
 }
 
-private final class SuccessfulURLProtocol: URLProtocol {
+private class SuccessfulURLProtocol: URLProtocol {
     override class func canInit(with request: URLRequest) -> Bool {
         true
     }
@@ -106,7 +106,7 @@ private final class SuccessfulURLProtocol: URLProtocol {
     override func stopLoading() {}
 }
 
-private final class FailingURLProtocol: URLProtocol {
+private class FailingURLProtocol: URLProtocol {
     override class func canInit(with request: URLRequest) -> Bool {
         true
     }
