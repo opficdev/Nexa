@@ -7,6 +7,28 @@
 
 import Foundation
 
+struct NXResponseCacheValidators: Sendable {
+    let entityTag: String?
+    let lastModified: String?
+
+    init?(response: HTTPURLResponse) {
+        let entityTag = response.value(forHTTPHeaderField: "ETag")
+        let lastModified = response.value(forHTTPHeaderField: "Last-Modified")
+
+        guard entityTag != nil || lastModified != nil else {
+            return nil
+        }
+
+        self.entityTag = entityTag
+        self.lastModified = lastModified
+    }
+}
+
+struct NXCacheRevalidationContext: Sendable {
+    let cachedResponse: NXRawResponse
+    let validators: NXResponseCacheValidators
+}
+
 actor NXResponseCacheStore {
     private var responses: [NXRequestCacheKey: CachedResponse] = [:]
     private var inFlightTasks: [NXRequestCacheKey: Task<NXRawResponse, any Error>] = [:]
@@ -43,7 +65,10 @@ actor NXResponseCacheStore {
             if shouldCache(rawResponse) {
                 responses[key] = CachedResponse(
                     rawResponse: rawResponse,
-                    expirationDate: Date().addingTimeInterval(ttl)
+                    expirationDate: Date().addingTimeInterval(ttl),
+                    validators: rawResponse.response.statusCode == 200
+                        ? NXResponseCacheValidators(response: rawResponse.response)
+                        : nil
                 )
             }
 
@@ -57,5 +82,6 @@ actor NXResponseCacheStore {
     private struct CachedResponse: Sendable {
         let rawResponse: NXRawResponse
         let expirationDate: Date
+        let validators: NXResponseCacheValidators?
     }
 }

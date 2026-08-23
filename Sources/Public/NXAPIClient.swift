@@ -13,6 +13,8 @@ import Foundation
 ///
 /// Create a client once, then start requests from relative paths.
 ///
+/// When caching is enabled, each `NXAPIClient` initializer creates an independent in-memory cache and in-flight request store. Reuse one client through a service or dependency container to share cached responses. Copies of the same client value retain the same store.
+///
 /// ```swift
 /// import Foundation
 /// import Nexa
@@ -46,7 +48,7 @@ public struct NXAPIClient: Sendable {
         responseCacheStore = switch configuration.cache {
         case .disabled:
             nil
-        case .memory:
+        case .memory, .revalidatingMemory:
             NXResponseCacheStore()
         }
     }
