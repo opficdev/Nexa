@@ -63,3 +63,64 @@ public struct NXNetworkTransactionMetrics: Sendable, Equatable {
         self.isConnectionReused = isConnectionReused
     }
 }
+
+protocol NXNetworkMetricsSource {
+    associatedtype Transaction: NXNetworkTransactionMetricsSource
+
+    var taskInterval: DateInterval { get }
+    var redirectCount: Int { get }
+    var transactions: [Transaction] { get }
+}
+
+protocol NXNetworkTransactionMetricsSource {
+    var domainLookupStartDate: Date? { get }
+    var domainLookupEndDate: Date? { get }
+    var connectStartDate: Date? { get }
+    var connectEndDate: Date? { get }
+    var secureConnectionStartDate: Date? { get }
+    var secureConnectionEndDate: Date? { get }
+    var requestStartDate: Date? { get }
+    var responseStartDate: Date? { get }
+    var isConnectionReused: Bool { get }
+}
+
+extension NXNetworkMetrics {
+    init<Source: NXNetworkMetricsSource>(source: Source) {
+        let transactions = source.transactions.map { transaction in
+            NXNetworkTransactionMetrics(
+                domainLookupDuration: Self.duration(
+                    from: transaction.domainLookupStartDate,
+                    to: transaction.domainLookupEndDate
+                ),
+                connectionDuration: Self.duration(
+                    from: transaction.connectStartDate,
+                    to: transaction.connectEndDate
+                ),
+                secureConnectionDuration: Self.duration(
+                    from: transaction.secureConnectionStartDate,
+                    to: transaction.secureConnectionEndDate
+                ),
+                timeToFirstByte: Self.duration(
+                    from: transaction.requestStartDate,
+                    to: transaction.responseStartDate
+                ),
+                isConnectionReused: transaction.isConnectionReused
+            )
+        }
+
+        self.init(
+            taskDuration: source.taskInterval.duration,
+            redirectCount: source.redirectCount,
+            transactionCount: transactions.count,
+            transactions: transactions
+        )
+    }
+
+    private static func duration(from startDate: Date?, to endDate: Date?) -> TimeInterval? {
+        guard let startDate, let endDate else {
+            return nil
+        }
+
+        return endDate.timeIntervalSince(startDate)
+    }
+}

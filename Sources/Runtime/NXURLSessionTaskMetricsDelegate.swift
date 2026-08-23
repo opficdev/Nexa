@@ -19,7 +19,8 @@ final class NXURLSessionTaskMetricsDelegate: NSObject, URLSessionTaskDelegate {
         task: URLSessionTask,
         didFinishCollecting metrics: URLSessionTaskMetrics
     ) {
-        let snapshot = NXNetworkMetrics(metrics: metrics)
+        let source = NXURLSessionTaskMetricsSource(metrics: metrics)
+        let snapshot = NXNetworkMetrics(source: source)
 
         Task { [metricsObserver] in
             await metricsObserver.record(snapshot)
@@ -27,43 +28,38 @@ final class NXURLSessionTaskMetricsDelegate: NSObject, URLSessionTaskDelegate {
     }
 }
 
-private extension NXNetworkMetrics {
+private struct NXURLSessionTaskMetricsSource: NXNetworkMetricsSource {
+    let taskInterval: DateInterval
+    let redirectCount: Int
+    let transactions: [NXURLSessionTaskTransactionMetricsSource]
+
     init(metrics: URLSessionTaskMetrics) {
-        let transactions = metrics.transactionMetrics.map { transaction in
-            NXNetworkTransactionMetrics(
-                domainLookupDuration: Self.duration(
-                    from: transaction.domainLookupStartDate,
-                    to: transaction.domainLookupEndDate
-                ),
-                connectionDuration: Self.duration(
-                    from: transaction.connectStartDate,
-                    to: transaction.connectEndDate
-                ),
-                secureConnectionDuration: Self.duration(
-                    from: transaction.secureConnectionStartDate,
-                    to: transaction.secureConnectionEndDate
-                ),
-                timeToFirstByte: Self.duration(
-                    from: transaction.requestStartDate,
-                    to: transaction.responseStartDate
-                ),
-                isConnectionReused: transaction.isReusedConnection
-            )
-        }
-
-        self.init(
-            taskDuration: metrics.taskInterval.duration,
-            redirectCount: metrics.redirectCount,
-            transactionCount: transactions.count,
-            transactions: transactions
-        )
+        taskInterval = metrics.taskInterval
+        redirectCount = metrics.redirectCount
+        transactions = metrics.transactionMetrics.map(NXURLSessionTaskTransactionMetricsSource.init)
     }
+}
 
-    private static func duration(from startDate: Date?, to endDate: Date?) -> TimeInterval? {
-        guard let startDate, let endDate else {
-            return nil
-        }
+private struct NXURLSessionTaskTransactionMetricsSource: NXNetworkTransactionMetricsSource {
+    let domainLookupStartDate: Date?
+    let domainLookupEndDate: Date?
+    let connectStartDate: Date?
+    let connectEndDate: Date?
+    let secureConnectionStartDate: Date?
+    let secureConnectionEndDate: Date?
+    let requestStartDate: Date?
+    let responseStartDate: Date?
+    let isConnectionReused: Bool
 
-        return endDate.timeIntervalSince(startDate)
+    init(metrics: URLSessionTaskTransactionMetrics) {
+        domainLookupStartDate = metrics.domainLookupStartDate
+        domainLookupEndDate = metrics.domainLookupEndDate
+        connectStartDate = metrics.connectStartDate
+        connectEndDate = metrics.connectEndDate
+        secureConnectionStartDate = metrics.secureConnectionStartDate
+        secureConnectionEndDate = metrics.secureConnectionEndDate
+        requestStartDate = metrics.requestStartDate
+        responseStartDate = metrics.responseStartDate
+        isConnectionReused = metrics.isReusedConnection
     }
 }
