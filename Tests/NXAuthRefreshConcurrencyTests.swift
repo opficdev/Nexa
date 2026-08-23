@@ -89,6 +89,36 @@ struct NXAuthRefreshConcurrencyTests {
         #expect(await logger.authRefreshLogs().count == 1)
     }
 
+    @Test("nil refresh 결과는 원래 401을 재전송 없이 보존한다")
+    func nilRefreshResultPreservesUnauthorizedResponse() async {
+        let counter = AttemptCounter()
+        let provider = RefreshTestProvider(
+            currentToken: "old-token",
+            refreshResult: .success(nil)
+        )
+        let logger = MemoryLogger()
+        let client = makeClient(
+            counter: counter,
+            logger: logger,
+            authTokenProvider: provider
+        )
+
+        await #expect {
+            let _: UserDTO = try await client.get("/users/me").authorized().send(as: UserDTO.self)
+        } throws: { error in
+            guard case let NXError.invalidStatus(statusCode, data) = error else {
+                return false
+            }
+            return statusCode == 401 && data == Data(#"{"message":"expired"}"#.utf8)
+        }
+
+        #expect(await counter.value() == 1)
+        #expect(await provider.refreshCount() == 1)
+        let logs = await logger.authRefreshLogs()
+        #expect(logs.count == 1)
+        #expect(!logs[0].succeeded)
+    }
+
     @Test("호출자 취소는 공유 refresh와 다른 요청을 취소하지 않는다")
     func cancellingCallerDoesNotCancelSharedRefresh() async throws {
         let counter = AttemptCounter()
