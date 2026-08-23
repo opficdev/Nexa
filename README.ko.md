@@ -17,6 +17,7 @@ Nexa는 `URLSession` 기반의 SwiftUI 스타일 선언형 네트워킹 라이�
 - [Endpoint API](#endpoint-api)
 - [요청 전환](#요청-전환)
 - [설정](#설정)
+- [전송 metrics](#전송-metrics)
 - [인증 토큰 갱신](#인증-토큰-갱신)
 - [응답 cache](#응답-cache)
 - [재시도 정책](#재시도-정책)
@@ -37,6 +38,7 @@ Nexa는 `URLSession` 기반의 SwiftUI 스타일 선언형 네트워킹 라이�
 - [x] 응답 유효성 검사 및 서버 에러 디코딩
 - [x] 성공한 `GET` 응답과 진행 중인 동일 요청을 위한 validator 재검증 선택형 memory response cache
 - [x] 로거 훅 및 테스트를 위한 transport 추상화
+- [x] `Sendable` URLSession task metrics observer
 
 ## 요구 사항
 
@@ -89,6 +91,7 @@ dependencies: [
 | `NXAuthTokenProvider` | `.authorized()` 요청에 토큰 조회 및 갱신 기능이 필요할 때 | `authTokenProvider: yourAuthTokenProvider` |
 | `NXServerErrorDecoder` | 실패 응답을 도메인 에러로 디코딩할 때 | `serverErrorDecoder: yourServerErrorDecoder` |
 | `NXLogger` | 구조화된 요청 생명주기 로깅이 필요할 때 | `logger: yourLogger` |
+| `NXNetworkMetricsObserver` | logger event 변경 없이 URLSession task 시간 snapshot이 필요할 때 | `NXURLSessionTransport(metricsObserver: yourObserver)` |
 | `NXRawResponse` | `Data`와 `HTTPURLResponse`를 직접 다뤄야 할 때 | `let response = try await client.get("/users").send()` |
 | `NXError` | 호출 코드에서 Nexa 고유 오류를 처리할 때 | `catch let error as NXError` |
 | `NXHTTPMethod` | `NXEndpoint`의 메서드를 정의할 때 | `var method: NXHTTPMethod { .post }` |
@@ -169,6 +172,7 @@ struct UserEndpoint: NXEndpoint {
 - `NXAuthTokenProvider`: bearer token 주입 및 갱신
 - `NXServerErrorDecoder`: 서버 payload를 도메인 에러로 매핑
 - `NXLogger`: 요청 생명주기 로깅 및 관측성
+- `NXNetworkMetricsObserver`: URLSession task 시간 snapshot
 
 ## 요청 흐름
 
@@ -347,6 +351,27 @@ let client = NXAPIClient(configuration: configuration)
 - `.authorized()` 요청에 대한 자동 인증 헤더 주입
 - 토큰 갱신 및 재시도 처리
 - 스터빙 및 격리 테스트를 위한 커스텀 transport
+
+## 전송 metrics
+
+`NXURLSessionTransport`는 `URLSession` task마다 `NXNetworkMetrics` snapshot 하나를 `NXNetworkMetricsObserver`에 전달할 수 있습니다. snapshot에는 task duration, redirect 수, transaction 수, 수집 순서를 보존한 `NXNetworkTransactionMetrics` 값이 포함됩니다.
+
+각 transaction은 Foundation timestamp의 시작과 끝이 모두 있을 때만 DNS, connection, TLS, request 시작부터 first byte까지의 duration을 나타냅니다. timestamp가 없으면 해당 값은 `nil`입니다. 재사용 connection은 `isConnectionReused`로 나타내며 DNS 또는 connection duration이 `nil`일 수 있습니다.
+
+```swift
+import Foundation
+import Nexa
+
+actor MetricsObserver: NXNetworkMetricsObserver {
+	func record(_ metrics: NXNetworkMetrics) async {
+		print(metrics.taskDuration ?? 0)
+	}
+}
+
+let transport = NXURLSessionTransport(metricsObserver: MetricsObserver())
+```
+
+snapshot은 `NXURLSessionTransport`만 수집합니다. 커스텀 `NXHTTPTransport`와 cache hit는 metrics를 합성하지 않습니다. observer 전달은 요청 완료를 지연하지 않으며 `NXLogger` event와의 순서는 보장하지 않습니다.
 
 ## 인증 토큰 갱신
 
