@@ -7,21 +7,21 @@
 
 import Foundation
 
-/// Value snapshot of one `URLSession` task's network activity.
+/// 하나의 `URLSession` task에서 발생한 네트워크 활동의 값 스냅샷입니다.
 ///
-/// `NXURLSessionTransport` creates this value before delivering it to an `NXNetworkMetricsObserver`.
-/// Custom `NXHTTPTransport` implementations do not produce this value.
+/// `NXURLSessionTransport`는 이 값을 `NXNetworkMetricsObserver`에 전달하기 전에 생성합니다.
+/// 사용자 정의 `NXHTTPTransport` 구현은 이 값을 생성하지 않습니다.
 public struct NXNetworkMetrics: Sendable, Equatable {
-    /// Total duration of the URL loading task.
+    /// URL 로딩 작업의 총 소요 시간입니다.
     public let taskDuration: TimeInterval?
-    /// Number of redirects followed by the URL loading task.
+    /// URL 로딩 작업이 따라간 리다이렉트 횟수입니다.
     public let redirectCount: Int
-    /// Number of transactions collected for the URL loading task.
+    /// URL 로딩 작업에서 수집한 트랜잭션 개수입니다.
     public let transactionCount: Int
-    /// Transaction snapshots in the order reported by `URLSession`.
+    /// `URLSession`이 보고한 순서를 보존한 트랜잭션 스냅샷입니다.
     public let transactions: [NXNetworkTransactionMetrics]
 
-    /// Creates a network metrics snapshot.
+    /// 네트워크 메트릭 스냅샷을 생성합니다.
     public init(
         taskDuration: TimeInterval?,
         redirectCount: Int,
@@ -35,20 +35,20 @@ public struct NXNetworkMetrics: Sendable, Equatable {
     }
 }
 
-/// Value snapshot of one URL loading transaction.
+/// 하나의 URL 로딩 트랜잭션에 대한 값 스냅샷입니다.
 public struct NXNetworkTransactionMetrics: Sendable, Equatable {
-    /// Duration of DNS lookup when URLSession reports both timestamps.
+    /// URLSession이 두 타임스탬프를 모두 보고한 경우의 DNS 조회 시간입니다.
     public let domainLookupDuration: TimeInterval?
-    /// Duration from connection start through connection end when URLSession reports both timestamps.
+    /// URLSession이 두 타임스탬프를 모두 보고한 경우 연결 시작부터 종료까지의 시간입니다.
     public let connectionDuration: TimeInterval?
-    /// Duration of TLS negotiation when URLSession reports both timestamps.
+    /// URLSession이 두 타임스탬프를 모두 보고한 경우 TLS 협상 시간입니다.
     public let secureConnectionDuration: TimeInterval?
-    /// Duration from request start until the first response byte when URLSession reports both timestamps.
+    /// URLSession이 두 타임스탬프를 모두 보고한 경우 요청 시작부터 첫 바이트 응답 수신까지의 시간입니다.
     public let timeToFirstByte: TimeInterval?
-    /// Whether URLSession reused an existing connection.
+    /// URLSession이 기존 연결을 재사용했는지 여부입니다.
     public let isConnectionReused: Bool
 
-    /// Creates a transaction metrics snapshot.
+    /// 트랜잭션 메트릭 스냅샷을 생성합니다.
     public init(
         domainLookupDuration: TimeInterval?,
         connectionDuration: TimeInterval?,
