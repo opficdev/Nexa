@@ -32,7 +32,7 @@ import Foundation
 public struct NXClientConfiguration: Sendable {
     /// 상대 경로 요청을 해석할 때 사용하는 기본 URL입니다.
     public let baseURL: URL
-    /// 모든 요청에 추가되는 헤더입니다. 요청 수준에서 키가 겹치면 해당 헤더로 덮어씁니다.
+    /// 모든 요청에 추가되는 헤더입니다. 키가 겹치면 요청 단위 헤더가 이 헤더를 덮어씁니다.
     public let headers: [String: String]
     /// 조립된 `URLRequest` 실행에 사용하는 전송 계층입니다.
     public let transport: any NXHTTPTransport

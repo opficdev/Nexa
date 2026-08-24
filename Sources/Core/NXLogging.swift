@@ -16,7 +16,7 @@ public enum NXLogEvent: Sendable {
     case authRefresh(NXAuthRefreshLog)
 }
 
-/// 요청 시도 시작 시점에 출력되는 구조화된 payload입니다.
+/// 요청 시도 시작 시점에 출력되는 구조화된 페이로드입니다.
 public struct NXRequestStartLog: Sendable {
     /// 동일한 논리 요청의 모든 시도에서 공유되는 안정적 식별자입니다.
     public let requestIdentifier: UUID
@@ -45,7 +45,7 @@ public struct NXRequestStartLog: Sendable {
     }
 }
 
-/// 요청 시도가 성공적으로 끝났을 때 출력되는 구조화된 payload입니다.
+/// 요청 시도가 성공적으로 끝났을 때 출력되는 구조화된 페이로드입니다.
 public struct NXRequestEndLog: Sendable {
     /// 동일한 논리 요청의 모든 시도에서 공유되는 안정적인 식별자입니다.
     public let requestIdentifier: UUID
@@ -74,7 +74,7 @@ public struct NXRequestEndLog: Sendable {
     }
 }
 
-/// 요청 시도가 실패했을 때 출력되는 구조화된 payload입니다.
+/// 요청 시도가 실패했을 때 출력되는 구조화된 페이로드입니다.
 public struct NXRequestFailureLog: Sendable {
     /// 동일한 논리 요청의 모든 시도에서 공유되는 안정적인 식별자입니다.
     public let requestIdentifier: UUID
@@ -99,7 +99,7 @@ public struct NXRequestFailureLog: Sendable {
     }
 }
 
-/// Nexa가 다음 재시도를 예약할 때 출력되는 구조화된 payload입니다.
+/// Nexa가 다음 재시도를 예약할 때 출력되는 구조화된 페이로드입니다.
 public struct NXRetryLog: Sendable {
     /// 동일한 논리 요청의 모든 시도에서 공유되는 안정적인 식별자입니다.
     public let requestIdentifier: UUID
@@ -116,7 +116,7 @@ public struct NXRetryLog: Sendable {
     }
 }
 
-/// 인증 토큰 갱신 시도 종료 후 출력되는 구조화된 payload입니다.
+/// 인증 토큰 갱신 시도 종료 후 출력되는 구조화된 페이로드입니다.
 public struct NXAuthRefreshLog: Sendable {
     /// 갱신을 시작한 요청의 식별자입니다.
     public let requestIdentifier: UUID

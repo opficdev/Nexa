@@ -7,7 +7,7 @@
 
 import Foundation
 
-/// 하나의 `URLSession` task에서 발생한 네트워크 활동의 값 스냅샷입니다.
+/// 하나의 `URLSession` 작업에서 발생한 네트워크 활동의 값 스냅샷입니다.
 ///
 /// `NXURLSessionTransport`는 이 값을 `NXNetworkMetricsObserver`에 전달하기 전에 생성합니다.
 /// 사용자 정의 `NXHTTPTransport` 구현은 이 값을 생성하지 않습니다.
