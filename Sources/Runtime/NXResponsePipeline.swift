@@ -40,6 +40,7 @@ enum NXResponsePipeline {
         }
     }
 
+    // 발생한 오류를 NXError로 변환하는 메서드
     static func map(error: any Error) -> NXError {
         if let nxError = error as? NXError {
             return nxError

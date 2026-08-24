@@ -8,6 +8,7 @@
 import Foundation
 
 enum NXRequestExecutor {
+    // 요청을 조립하고 원시 응답을 검증하는 실행 경계
     static func executeRaw(
         clientConfiguration: NXClientConfiguration,
         responseCacheStore: NXResponseCacheStore?,
@@ -52,6 +53,7 @@ enum NXRequestExecutor {
         }
     }
 
+    // 원시 응답을 지정한 타입으로 디코딩하는 실행 경계
     static func executeDecode<T: Decodable>(
         clientConfiguration: NXClientConfiguration,
         responseCacheStore: NXResponseCacheStore?,
@@ -77,6 +79,7 @@ enum NXRequestExecutor {
         }
     }
 
+    // 실행 interceptor를 구성하는 메서드
     private static func runtimeInterceptors(
         clientConfiguration: NXClientConfiguration,
         responseCacheStore: NXResponseCacheStore?,
