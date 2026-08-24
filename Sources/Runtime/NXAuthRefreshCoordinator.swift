@@ -8,7 +8,9 @@
 import Foundation
 
 actor NXAuthRefreshCoordinator {
+    // 현재 client에서 공유하는 진행 중 access token 갱신 작업
     private var inFlightRefresh: InFlightRefresh?
+    // 갱신 작업별 결과 대기 continuation을 보관하는 저장소
     private var waiters: [UUID: [UUID: CheckedContinuation<String?, any Error>]] = [:]
     private let onWaiterRegistered: (@Sendable () -> Void)?
     private let onRefreshCompleted: (@Sendable () -> Void)?
@@ -21,6 +23,7 @@ actor NXAuthRefreshCoordinator {
         self.onRefreshCompleted = onRefreshCompleted
     }
 
+    // access token 갱신 작업을 공유하는 메서드
     func refreshAccessToken(
         using provider: any NXAuthTokenProvider,
         logger: any NXLogger,
@@ -62,6 +65,7 @@ actor NXAuthRefreshCoordinator {
         return try await wait(for: inFlightRefresh)
     }
 
+    // 호출자의 갱신 결과 대기를 등록하는 메서드
     private func wait(for inFlightRefresh: InFlightRefresh) async throws -> String? {
         let waiterIdentifier = UUID()
 
@@ -125,6 +129,7 @@ actor NXAuthRefreshCoordinator {
         continuation.resume(throwing: CancellationError())
     }
 
+    // 갱신 결과를 대기 continuation에 전달하는 메서드
     private func complete(
         _ inFlightRefresh: InFlightRefresh,
         with result: Result<String?, any Error>
@@ -134,6 +139,7 @@ actor NXAuthRefreshCoordinator {
         }
 
         self.inFlightRefresh = nil
+        // 완료된 갱신 작업의 결과 대기 continuation 목록
         let continuations = waiters.removeValue(forKey: inFlightRefresh.identifier).map {
             Array($0.values)
         } ?? []
