@@ -7,11 +7,11 @@
 
 import Foundation
 
-/// Shared configuration applied to every request created by an API client.
+/// API 클라이언트가 생성하는 모든 요청에 적용되는 공통 설정입니다.
 ///
-/// ## Overview
+/// ## 개요
 ///
-/// Put shared networking behavior here once, then reuse it through `NXAPIClient`.
+/// 공통 네트워킹 동작을 한 곳에 정의하고 `NXAPIClient`를 통해 재사용하세요.
 ///
 /// ```swift
 /// import Foundation
@@ -30,40 +30,40 @@ import Foundation
 /// let client = NXAPIClient(configuration: configuration)
 /// ```
 public struct NXClientConfiguration: Sendable {
-    /// Base URL used to resolve relative request paths.
+    /// 상대 경로 요청을 해석할 때 사용하는 기본 URL입니다.
     public let baseURL: URL
-    /// Headers added to every request. Request-level headers overwrite these if keys conflict.
+    /// 모든 요청에 추가되는 헤더입니다. 키가 겹치면 요청 단위 헤더가 이 헤더를 덮어씁니다.
     public let headers: [String: String]
-    /// Transport used to execute the assembled `URLRequest`.
+    /// 조립된 `URLRequest` 실행에 사용하는 전송 계층입니다.
     public let transport: any NXHTTPTransport
-    /// Logger that receives request lifecycle events.
+    /// 요청 라이프사이클 이벤트를 수신하는 로거입니다.
     public let logger: any NXLogger
-    /// Interceptors applied to every request.
+    /// 모든 요청에 적용되는 인터셉터입니다.
     public let interceptors: [any NXHTTPInterceptor]
-    /// Response cache behavior for successful GET responses and in-flight identical requests.
+    /// 성공한 GET 응답과 진행 중인 동일 요청에 대한 캐시 동작입니다.
     public let cache: NXCache
-    /// Decoder used by typed requests to decode the response body.
+    /// 타입 지정 요청에서 응답 본문을 디코딩할 때 사용하는 디코더입니다.
     public let decoder: JSONDecoder
-    /// Encoder used for JSON request bodies when no encoder is passed to `json(_:encoder:)`.
+    /// `json(_:encoder:)`에 인코더가 전달되지 않을 때 JSON 요청 본문을 만드는 인코더입니다.
     public let encoder: JSONEncoder
-    /// Decoder that can map failed server responses into domain-specific errors.
+    /// 실패한 서버 응답을 도메인 전용 오류로 매핑할 수 있는 디코더입니다.
     public let serverErrorDecoder: any NXServerErrorDecoder
-    /// Provider used by authenticated requests to fetch and refresh bearer tokens.
+    /// 인증 요청에서 베어러 토큰을 조회하고 갱신하는 데 사용하는 공급자입니다.
     public let authTokenProvider: (any NXAuthTokenProvider)?
 
-    /// Creates a client configuration.
+    /// 클라이언트 구성을 생성합니다.
     ///
     /// - Parameters:
-    ///   - baseURL: Base URL used to resolve relative request paths.
-    ///   - headers: Headers added to every request.
-    ///   - transport: Transport used to execute requests.
-    ///   - logger: Logger that receives request lifecycle events.
-    ///   - interceptors: Interceptors applied to every request.
-    ///   - cache: Response cache behavior for successful GET responses and in-flight identical requests.
-    ///   - decoder: Decoder used for typed responses.
-    ///   - encoder: Encoder used for JSON request bodies.
-    ///   - serverErrorDecoder: Decoder used to map failed responses to custom errors.
-    ///   - authTokenProvider: Provider used for authenticated requests.
+    ///   - baseURL: 상대 경로 요청을 해석할 때 사용하는 기본 URL입니다.
+    ///   - headers: 모든 요청에 추가되는 헤더입니다.
+    ///   - transport: 요청 실행을 담당하는 전송 계층입니다.
+    ///   - logger: 요청 라이프사이클 이벤트를 받는 로거입니다.
+    ///   - interceptors: 모든 요청에 적용되는 인터셉터 목록입니다.
+    ///   - cache: 성공한 GET 응답 및 진행 중인 동일 요청에 대한 캐시 동작입니다.
+    ///   - decoder: 타입 지정 응답 디코딩에 사용하는 디코더입니다.
+    ///   - encoder: JSON 요청 본문 인코딩에 사용하는 인코더입니다.
+    ///   - serverErrorDecoder: 실패 응답을 커스텀 오류로 매핑하는 디코더입니다.
+    ///   - authTokenProvider: 인증 요청에 사용되는 공급자입니다.
     public init(
         baseURL: URL,
         headers: [String: String] = [:],

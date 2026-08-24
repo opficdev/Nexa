@@ -8,6 +8,7 @@
 import Foundation
 
 struct NXAuthInterceptor: NXHTTPInterceptor {
+    // 인증이 필요한 요청의 access token 적용과 갱신을 조정하는 interceptor
     func intercept(
         context: NXRequestExecutionContext,
         next: @escaping @Sendable (NXRequestExecutionContext) async throws -> NXRawResponse

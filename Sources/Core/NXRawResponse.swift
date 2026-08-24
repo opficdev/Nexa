@@ -7,14 +7,14 @@
 
 import Foundation
 
-/// Raw HTTP response returned by Nexa before decoding.
+/// Nexa에서 디코딩 전 반환하는 원시 HTTP 응답입니다.
 public struct NXRawResponse: Sendable {
-    /// Raw response body data.
+    /// 원시 응답 본문 데이터입니다.
     public var data: Data
-    /// HTTP response associated with the response body.
+    /// 응답 본문과 연결된 HTTP 응답입니다.
     public var response: HTTPURLResponse
 
-    /// Creates a raw response container.
+    /// 원시 응답 컨테이너를 생성합니다.
     public init(data: Data, response: HTTPURLResponse) {
         self.data = data
         self.response = response

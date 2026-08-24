@@ -7,13 +7,13 @@
 
 import Foundation
 
-/// Shared entry point for building and sending HTTP requests with a single client configuration.
+/// 단일 클라이언트 설정으로 HTTP 요청을 구성하고 전송하기 위한 공용 진입점입니다.
 ///
-/// ## Overview
+/// ## 개요
 ///
-/// Create a client once, then start requests from relative paths.
+/// 클라이언트를 한 번 생성한 뒤 상대 경로로 요청을 시작하세요.
 ///
-/// When caching is enabled, each `NXAPIClient` initializer creates an independent in-memory cache and in-flight request store. Reuse one client through a service or dependency container to share cached responses. Copies of the same client value retain the same store.
+/// 캐시를 사용하면 각 `NXAPIClient` 초기화 시 독립적인 인메모리 캐시와 인플라이트 요청 저장소가 생성됩니다. 캐시 응답을 공유하려면 서비스나 의존성 컨테이너에서 하나의 클라이언트를 재사용하세요. 동일 클라이언트 값의 복사본은 같은 저장소를 유지합니다.
 ///
 /// ```swift
 /// import Foundation
@@ -35,15 +35,15 @@ import Foundation
 ///     .send(as: User.self)
 /// ```
 ///
-/// Use the method-based builders for every direct request. `NXEndpoint` retains its typed builder configuration contract for source compatibility.
+/// 모든 직접 요청은 메서드 기반 빌더를 사용하세요. `NXEndpoint`는 소스 호환성을 위해 타입 지정 빌더 구성 계약을 유지합니다.
 public struct NXAPIClient: Sendable {
     private let configuration: NXClientConfiguration
     private let responseCacheStore: NXResponseCacheStore?
     private let authRefreshCoordinator: NXAuthRefreshCoordinator
 
-    /// Creates a client that uses the provided configuration for all requests.
+    /// 모든 요청에 제공된 설정을 사용하는 클라이언트를 생성합니다.
     ///
-    /// - Parameter configuration: Shared settings such as the base URL, transport, logger, and auth provider.
+    /// - Parameter configuration: 기본 URL, 전송 계층, 로거, 인증 공급자 같은 공용 설정입니다.
     public init(configuration: NXClientConfiguration) {
         self.init(
             configuration: configuration,
@@ -70,20 +70,20 @@ public struct NXAPIClient: Sendable {
         }
     }
 
-    /// Creates an untyped `GET` request builder for the given path.
+    /// 지정한 경로에 대한 타입 미지정 `GET` 요청 빌더를 생성합니다.
     ///
-    /// - Parameter path: Path relative to the configured base URL.
-    /// - Returns: A request builder that can be further configured before sending.
+    /// - Parameter path: 설정된 기본 URL 기준 상대 경로입니다.
+    /// - Returns: 전송 전에 추가로 설정할 수 있는 요청 빌더입니다.
     public func get(_ path: String = "") -> NXRequestBuilder {
         request(method: .get, path: path)
     }
 
-    /// Creates a typed `GET` request builder for the given path.
+    /// 지정한 경로에 대한 타입 지정 `GET` 요청 빌더를 생성합니다.
     ///
     /// - Parameters:
-    ///   - path: Path relative to the configured base URL.
-    ///   - type: Response type to decode when the request succeeds.
-    /// - Returns: A typed request builder that decodes into `Response`.
+    ///   - path: 설정된 기본 URL 기준 상대 경로입니다.
+    ///   - type: 요청이 성공했을 때 디코딩할 응답 타입입니다.
+    /// - Returns: `Response`로 디코딩하는 타입 지정 요청 빌더입니다.
     @available(*, deprecated, message: "Use get(_:) followed by send(as:).")
     public func get<Response: Decodable>(
         _ path: String = "",
@@ -92,94 +92,94 @@ public struct NXAPIClient: Sendable {
         typedRequest(method: .get, path: path)
     }
 
-    /// Creates an untyped `POST` request builder for the given path.
+    /// 지정한 경로에 대한 타입 미지정 `POST` 요청 빌더를 생성합니다.
     ///
-    /// - Parameter path: Path relative to the configured base URL.
-    /// - Returns: A request builder that can be further configured before sending.
+    /// - Parameter path: 설정된 기본 URL 기준 상대 경로입니다.
+    /// - Returns: 전송 전에 추가로 설정할 수 있는 요청 빌더입니다.
     public func post(_ path: String) -> NXRequestBuilder {
         request(method: .post, path: path)
     }
 
-    /// Creates a typed `POST` request builder for the given path.
+    /// 지정한 경로에 대한 타입 지정 `POST` 요청 빌더를 생성합니다.
     ///
     /// - Parameters:
-    ///   - path: Path relative to the configured base URL.
-    ///   - type: Response type to decode when the request succeeds.
-    /// - Returns: A typed request builder that decodes into `Response`.
+    ///   - path: 설정된 기본 URL 기준 상대 경로입니다.
+    ///   - type: 요청이 성공했을 때 디코딩할 응답 타입입니다.
+    /// - Returns: `Response`로 디코딩하는 타입 지정 요청 빌더입니다.
     @available(*, deprecated, message: "Use post(_:) followed by send(as:).")
     public func post<Response: Decodable>(_ path: String, as type: Response.Type) -> NXTypedRequestBuilder<Response> {
         typedRequest(method: .post, path: path)
     }
 
-    /// Creates an untyped `PUT` request builder for the given path.
+    /// 지정한 경로에 대한 타입 미지정 `PUT` 요청 빌더를 생성합니다.
     ///
-    /// - Parameter path: Path relative to the configured base URL.
-    /// - Returns: A request builder that can be further configured before sending.
+    /// - Parameter path: 설정된 기본 URL 기준 상대 경로입니다.
+    /// - Returns: 전송 전에 추가로 설정할 수 있는 요청 빌더입니다.
     public func put(_ path: String) -> NXRequestBuilder {
         request(method: .put, path: path)
     }
 
-    /// Creates a typed `PUT` request builder for the given path.
+    /// 지정한 경로에 대한 타입 지정 `PUT` 요청 빌더를 생성합니다.
     ///
     /// - Parameters:
-    ///   - path: Path relative to the configured base URL.
-    ///   - type: Response type to decode when the request succeeds.
-    /// - Returns: A typed request builder that decodes into `Response`.
+    ///   - path: 설정된 기본 URL 기준 상대 경로입니다.
+    ///   - type: 요청이 성공했을 때 디코딩할 응답 타입입니다.
+    /// - Returns: `Response`로 디코딩하는 타입 지정 요청 빌더입니다.
     @available(*, deprecated, message: "Use put(_:) followed by send(as:).")
     public func put<Response: Decodable>(_ path: String, as type: Response.Type) -> NXTypedRequestBuilder<Response> {
         typedRequest(method: .put, path: path)
     }
 
-    /// Creates an untyped `PATCH` request builder for the given path.
+    /// 지정한 경로에 대한 타입 미지정 `PATCH` 요청 빌더를 생성합니다.
     ///
-    /// - Parameter path: Path relative to the configured base URL.
-    /// - Returns: A request builder that can be further configured before sending.
+    /// - Parameter path: 설정된 기본 URL 기준 상대 경로입니다.
+    /// - Returns: 전송 전에 추가로 설정할 수 있는 요청 빌더입니다.
     public func patch(_ path: String) -> NXRequestBuilder {
         request(method: .patch, path: path)
     }
 
-    /// Creates a typed `PATCH` request builder for the given path.
+    /// 지정한 경로에 대한 타입 지정 `PATCH` 요청 빌더를 생성합니다.
     ///
     /// - Parameters:
-    ///   - path: Path relative to the configured base URL.
-    ///   - type: Response type to decode when the request succeeds.
-    /// - Returns: A typed request builder that decodes into `Response`.
+    ///   - path: 설정된 기본 URL 기준 상대 경로입니다.
+    ///   - type: 요청이 성공했을 때 디코딩할 응답 타입입니다.
+    /// - Returns: `Response`로 디코딩하는 타입 지정 요청 빌더입니다.
     @available(*, deprecated, message: "Use patch(_:) followed by send(as:).")
     public func patch<Response: Decodable>(_ path: String, as type: Response.Type) -> NXTypedRequestBuilder<Response> {
         typedRequest(method: .patch, path: path)
     }
 
-    /// Creates an untyped `DELETE` request builder for the given path.
+    /// 지정한 경로에 대한 타입 미지정 `DELETE` 요청 빌더를 생성합니다.
     ///
-    /// - Parameter path: Path relative to the configured base URL.
-    /// - Returns: A request builder that can be further configured before sending.
+    /// - Parameter path: 설정된 기본 URL 기준 상대 경로입니다.
+    /// - Returns: 전송 전에 추가로 설정할 수 있는 요청 빌더입니다.
     public func delete(_ path: String) -> NXRequestBuilder {
         request(method: .delete, path: path)
     }
 
-    /// Creates a typed `DELETE` request builder for the given path.
+    /// 지정한 경로에 대한 타입 지정 `DELETE` 요청 빌더를 생성합니다.
     ///
     /// - Parameters:
-    ///   - path: Path relative to the configured base URL.
-    ///   - type: Response type to decode when the request succeeds.
-    /// - Returns: A typed request builder that decodes into `Response`.
+    ///   - path: 설정된 기본 URL 기준 상대 경로입니다.
+    ///   - type: 요청이 성공했을 때 디코딩할 응답 타입입니다.
+    /// - Returns: `Response`로 디코딩하는 타입 지정 요청 빌더입니다.
     @available(*, deprecated, message: "Use delete(_:) followed by send(as:).")
     public func delete<Response: Decodable>(_ path: String, as type: Response.Type) -> NXTypedRequestBuilder<Response> {
         typedRequest(method: .delete, path: path)
     }
 
-    /// Builds a typed request from an endpoint value.
+    /// 엔드포인트 값에서 타입 지정 요청을 구성합니다.
     ///
-    /// - Parameter endpoint: Endpoint that defines the HTTP method, path, and optional request customization.
-    /// - Returns: A typed request builder configured from the endpoint.
+    /// - Parameter endpoint: HTTP 메서드, 경로, 선택적 요청 커스터마이즈를 정의하는 엔드포인트입니다.
+    /// - Returns: 엔드포인트 기반으로 설정된 타입 지정 요청 빌더입니다.
     public func request<E: NXEndpoint>(_ endpoint: E) -> NXTypedRequestBuilder<E.Response> {
         endpoint.configure(typedRequest(method: endpoint.method, path: endpoint.path))
     }
 
-    /// Sends an endpoint request and decodes its response.
+    /// 엔드포인트 요청을 전송하고 응답을 디코딩합니다.
     ///
-    /// - Parameter endpoint: Endpoint that defines the request.
-    /// - Returns: Decoded response value for the endpoint.
+    /// - Parameter endpoint: 요청 동작을 정의한 엔드포인트입니다.
+    /// - Returns: 엔드포인트에 대한 디코딩된 응답 값입니다.
     public func send<E: NXEndpoint>(_ endpoint: E) async throws -> E.Response {
         try await request(endpoint).requestBuilder.send(as: E.Response.self)
     }

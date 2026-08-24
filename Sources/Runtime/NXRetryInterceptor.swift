@@ -14,6 +14,7 @@ struct NXRetryInterceptor: NXHTTPInterceptor {
         self.dependencies = dependencies
     }
 
+    // 재시도 정책에 따라 요청 실행을 조정하는 interceptor
     func intercept(
         context: NXRequestExecutionContext,
         next: @escaping @Sendable (NXRequestExecutionContext) async throws -> NXRawResponse

@@ -14,6 +14,7 @@ final class NXURLSessionTaskMetricsDelegate: NSObject, URLSessionTaskDelegate {
         self.metricsObserver = metricsObserver
     }
 
+    // URLSession task 측정값을 Nexa snapshot으로 전달하는 delegate 메서드
     func urlSession(
         _ session: URLSession,
         task: URLSessionTask,
@@ -33,6 +34,7 @@ private struct NXURLSessionTaskMetricsSource: NXNetworkMetricsSource {
     let redirectCount: Int
     let transactions: [NXURLSessionTaskTransactionMetricsSource]
 
+    // URLSession task 측정값에서 전송 snapshot source를 구성하는 initializer
     init(metrics: URLSessionTaskMetrics) {
         taskInterval = metrics.taskInterval
         redirectCount = metrics.redirectCount
@@ -51,6 +53,7 @@ private struct NXURLSessionTaskTransactionMetricsSource: NXNetworkTransactionMet
     let responseStartDate: Date?
     let isConnectionReused: Bool
 
+    // URLSession transaction 측정값에서 transaction snapshot source를 구성하는 initializer
     init(metrics: URLSessionTaskTransactionMetrics) {
         domainLookupStartDate = metrics.domainLookupStartDate
         domainLookupEndDate = metrics.domainLookupEndDate
