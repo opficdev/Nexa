@@ -7,11 +7,11 @@
 
 import Foundation
 
-/// API 클라이언트가 생성하는 모든 요청에 적용되는 공통 설정입니다.
+/// API client가 생성하는 모든 요청의 공통 설정
 ///
 /// ## 개요
 ///
-/// 공통 네트워킹 동작을 한 곳에 정의하고 `NXAPIClient`를 통해 재사용하세요.
+/// 공통 네트워크 동작의 단일 정의 지점, `NXAPIClient` 통한 재사용
 ///
 /// ```swift
 /// import Foundation
@@ -30,40 +30,40 @@ import Foundation
 /// let client = NXAPIClient(configuration: configuration)
 /// ```
 public struct NXClientConfiguration: Sendable {
-    /// 상대 경로 요청을 해석할 때 사용하는 기본 URL입니다.
+    /// 상대 경로 요청 해석 기본 URL
     public let baseURL: URL
-    /// 모든 요청에 추가되는 헤더입니다. 키가 겹치면 요청 단위 헤더가 이 헤더를 덮어씁니다.
+    /// 모든 요청 공통 header(키 충돌 시 요청 단위 header 우선 적용)
     public let headers: [String: String]
-    /// 조립된 `URLRequest` 실행에 사용하는 전송 계층입니다.
+    /// 조립된 `URLRequest` 실행 transport
     public let transport: any NXHTTPTransport
-    /// 요청 라이프사이클 이벤트를 수신하는 로거입니다.
+    /// 요청 lifecycle event 수신 logger
     public let logger: any NXLogger
-    /// 모든 요청에 적용되는 인터셉터입니다.
+    /// 요청별 적용 interceptor
     public let interceptors: [any NXHTTPInterceptor]
-    /// 성공한 GET 응답과 진행 중인 동일 요청에 대한 캐시 동작입니다.
+    /// 성공한 GET 응답 및 진행 중 동일 요청의 cache 동작
     public let cache: NXCache
-    /// 타입 지정 요청에서 응답 본문을 디코딩할 때 사용하는 디코더입니다.
+    /// type 지정 요청 응답 body decoder
     public let decoder: JSONDecoder
-    /// `json(_:encoder:)`에 인코더가 전달되지 않을 때 JSON 요청 본문을 만드는 인코더입니다.
+    /// `json(_:encoder:)` 미전달 시 사용 JSON 요청 body encoder
     public let encoder: JSONEncoder
-    /// 실패한 서버 응답을 도메인 전용 오류로 매핑할 수 있는 디코더입니다.
+    /// 실패한 서버 응답을 도메인 전용 오류로 mapping하는 decoder
     public let serverErrorDecoder: any NXServerErrorDecoder
-    /// 인증 요청에서 베어러 토큰을 조회하고 갱신하는 데 사용하는 공급자입니다.
+    /// 인증 요청에서 베어러 토큰 조회 및 갱신 provider
     public let authTokenProvider: (any NXAuthTokenProvider)?
 
-    /// 클라이언트 구성을 생성합니다.
+    /// client 구성 initialization
     ///
     /// - Parameters:
-    ///   - baseURL: 상대 경로 요청을 해석할 때 사용하는 기본 URL입니다.
-    ///   - headers: 모든 요청에 추가되는 헤더입니다.
-    ///   - transport: 요청 실행을 담당하는 전송 계층입니다.
-    ///   - logger: 요청 라이프사이클 이벤트를 받는 로거입니다.
-    ///   - interceptors: 모든 요청에 적용되는 인터셉터 목록입니다.
-    ///   - cache: 성공한 GET 응답 및 진행 중인 동일 요청에 대한 캐시 동작입니다.
-    ///   - decoder: 타입 지정 응답 디코딩에 사용하는 디코더입니다.
-    ///   - encoder: JSON 요청 본문 인코딩에 사용하는 인코더입니다.
-    ///   - serverErrorDecoder: 실패 응답을 커스텀 오류로 매핑하는 디코더입니다.
-    ///   - authTokenProvider: 인증 요청에 사용되는 공급자입니다.
+    ///   - baseURL: 상대 경로 요청 해석 기본 URL
+    ///   - headers: 모든 요청 공통 header(키 충돌 시 요청 단위 header 우선 적용)
+    ///   - transport: 요청 실행 transport
+    ///   - logger: 요청 lifecycle event 수신 logger
+    ///   - interceptors: 요청 적용 interceptor 목록
+    ///   - cache: 성공한 GET 응답 및 진행 중 동일 요청의 cache 동작
+    ///   - decoder: type 지정 응답 decoding decoder
+    ///   - encoder: JSON 요청 body encoder
+    ///   - serverErrorDecoder: 실패 응답 사용자 정의 오류 mapping decoder
+    ///   - authTokenProvider: 인증 요청용 token provider
     public init(
         baseURL: URL,
         headers: [String: String] = [:],
