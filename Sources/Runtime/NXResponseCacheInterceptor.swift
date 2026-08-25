@@ -11,12 +11,12 @@ struct NXResponseCacheInterceptor: NXHTTPInterceptor {
     let cache: NXCache
     let store: NXResponseCacheStore
 
-    // cache 적용과 저장소 호출 조정 역할
+    // cache 적용과 store 호출 조정 역할
     func intercept(
         context: NXRequestExecutionContext,
         next: @escaping @Sendable (NXRequestExecutionContext) async throws -> NXRawResponse
     ) async throws -> NXRawResponse {
-        // cache 저장소에 전달할 만료 시간과 재검증 여부
+        // cache store 전달용 만료 시간과 재검증 여부
         let cachePolicy: (ttl: TimeInterval, revalidatesExpiredResponse: Bool)? = switch cache {
         case let .memory(ttl):
             (ttl, false)
@@ -65,7 +65,7 @@ struct NXResponseCacheInterceptor: NXHTTPInterceptor {
         )
     }
 
-    // 재검증 결과로 반환할 원시 응답 구성 역할
+    // 재검증 결과 반환용 `NXRawResponse` 구성 역할
     private static func revalidatedResponse(
         rawResponse: NXRawResponse,
         revalidationContext: NXCacheRevalidationContext?
