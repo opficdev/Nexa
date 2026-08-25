@@ -7,11 +7,11 @@
 
 import Foundation
 
-/// 고정 응답 타입을 갖는 재사용 가능한 API 엔드포인트를 설명합니다.
+/// 고정 응답 type을 갖는 재사용 가능한 API endpoint 설명
 ///
 /// ## 개요
 ///
-/// 동일한 요청 구조를 반복 사용하면서 응답 타입을 함께 유지해야 할 때 엔드포인트를 사용합니다.
+/// 동일 요청 구조 반복 사용 및 응답 type 보존이 필요한 재사용 가능한 endpoint 정의
 ///
 /// ```swift
 /// import Foundation
@@ -36,24 +36,24 @@ import Foundation
 /// let user = try await client.send(UserEndpoint(identifier: 42))
 /// ```
 public protocol NXEndpoint {
-    /// 엔드포인트 요청이 성공했을 때 생성되는 응답 타입입니다.
+    /// endpoint 요청 성공 시 decoding 대상 응답 type
     associatedtype Response: Decodable
-    /// 요청에 사용되는 HTTP 메서드입니다.
+    /// 요청에 사용되는 HTTP 메서드
     var method: NXHTTPMethod { get }
-    /// 클라이언트 기본 URL 기준 상대 경로입니다.
+    /// client 기본 URL 기준 상대 경로
     var path: String { get }
-    /// 전송 전에 엔드포인트별 커스터마이즈를 빌더에 적용합니다.
+    /// 전송 전 endpoint별 customization을 builder에 적용
     ///
-    /// - Parameter builder: `method`와 `path`로 생성한 기본 타입 지정 요청 빌더입니다.
-    /// - Returns: 커스터마이즈된 타입 지정 요청 빌더입니다.
+    /// - Parameter builder: `method`와 `path` 기반 기본 type 지정 request builder
+    /// - Returns: customization 적용 type 지정 request builder
     func configure(_ builder: NXTypedRequestBuilder<Response>) -> NXTypedRequestBuilder<Response>
 }
 
 public extension NXEndpoint {
-    /// 엔드포인트에 추가 커스터마이즈가 필요하지 않으면 빌더를 그대로 반환합니다.
+    /// endpoint 추가 customization 미필요 시 builder 원본 반환
     ///
-    /// - Parameter builder: `method`와 `path`로 생성한 기본 타입 지정 요청 빌더입니다.
-    /// - Returns: 동일한 빌더 인스턴스입니다.
+    /// - Parameter builder: `method`와 `path` 기반 기본 type 지정 request builder
+    /// - Returns: 동일 builder instance
     func configure(_ builder: NXTypedRequestBuilder<Response>) -> NXTypedRequestBuilder<Response> {
         builder
     }

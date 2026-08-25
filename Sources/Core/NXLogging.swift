@@ -7,7 +7,7 @@
 
 import Foundation
 
-/// Nexa 로거가 내보내는 요청 라이프사이클 이벤트입니다.
+/// Nexa logger가 내보내는 요청 lifecycle event
 public enum NXLogEvent: Sendable {
     case requestStart(NXRequestStartLog)
     case requestEnd(NXRequestEndLog)
@@ -16,20 +16,20 @@ public enum NXLogEvent: Sendable {
     case authRefresh(NXAuthRefreshLog)
 }
 
-/// 요청 시도 시작 시점에 출력되는 구조화된 페이로드입니다.
+/// 요청 시도 시작 시점 구조화 payload
 public struct NXRequestStartLog: Sendable {
-    /// 동일한 논리 요청의 모든 시도에서 공유되는 안정적 식별자입니다.
+    /// 동일한 논리 요청 시도 간 공유 안정적 식별자
     public let requestIdentifier: UUID
-    /// 현재 시도 번호(`1`부터 시작)입니다.
+    /// 현재 시도 번호(`1`부터 시작)
     public let attemptNumber: Int
-    /// 전송할 요청의 HTTP 메서드 문자열입니다.
+    /// 전송 HTTP 메서드 문자열
     public let method: String
-    /// 완전히 해석된 요청 URL 문자열입니다.
+    /// 완전 해석된 요청 URL 문자열
     public let url: String
-    /// 요청에 포함된 최종 헤더입니다.
+    /// 요청 최종 header
     public let headers: [String: String]
 
-    /// 요청 시작 로그 페이로드를 생성합니다.
+    /// 요청 시작 log payload 생성
     public init(
         requestIdentifier: UUID,
         attemptNumber: Int,
@@ -45,20 +45,20 @@ public struct NXRequestStartLog: Sendable {
     }
 }
 
-/// 요청 시도가 성공적으로 끝났을 때 출력되는 구조화된 페이로드입니다.
+/// 요청 성공 종료 시점 구조화 payload
 public struct NXRequestEndLog: Sendable {
-    /// 동일한 논리 요청의 모든 시도에서 공유되는 안정적인 식별자입니다.
+    /// 동일한 논리 요청 시도 간 공유 안정적 식별자
     public let requestIdentifier: UUID
-    /// 현재 시도 번호(`1`부터 시작)입니다.
+    /// 현재 시도 번호(`1`부터 시작)
     public let attemptNumber: Int
-    /// 서버가 반환한 HTTP 상태 코드입니다.
+    /// 서버 반환 HTTP 상태 코드
     public let statusCode: Int
-    /// 시도의 실제 경과 시간입니다.
+    /// 시도 실제 경과 시간
     public let elapsedTime: TimeInterval
-    /// 응답 페이로드 크기(바이트)입니다.
+    /// 응답 payload 크기(byte)
     public let payloadSize: Int
 
-    /// 요청 완료 로그 페이로드를 생성합니다.
+    /// 요청 완료 log payload 생성
     public init(
         requestIdentifier: UUID,
         attemptNumber: Int,
@@ -74,18 +74,18 @@ public struct NXRequestEndLog: Sendable {
     }
 }
 
-/// 요청 시도가 실패했을 때 출력되는 구조화된 페이로드입니다.
+/// 요청 실패 시점 구조화 payload
 public struct NXRequestFailureLog: Sendable {
-    /// 동일한 논리 요청의 모든 시도에서 공유되는 안정적인 식별자입니다.
+    /// 동일한 논리 요청 시도 간 공유 안정적 식별자
     public let requestIdentifier: UUID
-    /// 현재 시도 번호(`1`부터 시작)입니다.
+    /// 현재 시도 번호(`1`부터 시작)
     public let attemptNumber: Int
-    /// 시도의 실제 경과 시간입니다.
+    /// 시도 실제 경과 시간
     public let elapsedTime: TimeInterval
-    /// 사람이 읽기 쉬운 실패 설명입니다.
+    /// 사람이 읽기 쉬운 실패 설명
     public let errorDescription: String
 
-    /// 요청 실패 로그 페이로드를 생성합니다.
+    /// 요청 실패 log payload 생성
     public init(
         requestIdentifier: UUID,
         attemptNumber: Int,
@@ -99,16 +99,16 @@ public struct NXRequestFailureLog: Sendable {
     }
 }
 
-/// Nexa가 다음 재시도를 예약할 때 출력되는 구조화된 페이로드입니다.
+/// Nexa 다음 retry 예약 시 출력 구조화 payload
 public struct NXRetryLog: Sendable {
-    /// 동일한 논리 요청의 모든 시도에서 공유되는 안정적인 식별자입니다.
+    /// 동일한 논리 요청 시도 간 공유 안정적 식별자
     public let requestIdentifier: UUID
-    /// 다음에 실행될 시도 번호입니다.
+    /// 다음 실행 시도 번호
     public let nextAttemptNumber: Int
-    /// 다음 시도 시작 전 대기 시간입니다.
+    /// 다음 시도 시작 전 대기 시간
     public let delay: TimeInterval
 
-    /// 재시도 로그 페이로드를 생성합니다.
+    /// retry log payload 생성
     public init(requestIdentifier: UUID, nextAttemptNumber: Int, delay: TimeInterval) {
         self.requestIdentifier = requestIdentifier
         self.nextAttemptNumber = nextAttemptNumber
@@ -116,35 +116,35 @@ public struct NXRetryLog: Sendable {
     }
 }
 
-/// 인증 토큰 갱신 시도 종료 후 출력되는 구조화된 페이로드입니다.
+/// 인증 토큰 갱신 시도 종료 후 출력 구조화 payload
 public struct NXAuthRefreshLog: Sendable {
-    /// 갱신을 시작한 요청의 식별자입니다.
+    /// 갱신 시작 요청 식별자
     public let requestIdentifier: UUID
-    /// 갱신 시도 성공 여부입니다.
+    /// 갱신 시도 성공 여부
     public let succeeded: Bool
 
-    /// 인증 갱신 로그 페이로드를 생성합니다.
+    /// 인증 갱신 log payload 생성
     public init(requestIdentifier: UUID, succeeded: Bool) {
         self.requestIdentifier = requestIdentifier
         self.succeeded = succeeded
     }
 }
 
-/// Nexa의 구조화된 요청 라이프사이클 이벤트를 수신합니다.
+/// Nexa의 구조화된 요청 lifecycle event 수신
 ///
 /// ## 개요
 ///
-/// 요청 라이프사이클 이벤트를 자체 로깅 또는 분석 파이프라인으로 전달하려면 `NXLogger`를 채택하세요.
+/// 요청 lifecycle event의 자체 logging 또는 analytics pipeline 전달 대상 `NXLogger` 채택
 public protocol NXLogger: Sendable {
-    /// Nexa가 발행한 로그 이벤트 한 건을 처리합니다.
+    /// Nexa 발행 log event 단건 처리
     func log(_ event: NXLogEvent) async
 }
 
-/// 발생한 모든 이벤트를 무시하는 로거입니다.
+/// 발생 event 전체 무시 logger
 public struct NXNoopLogger: NXLogger {
-    /// 아무 작업도 수행하지 않는 로거를 생성합니다.
+    /// 무동작 logger 생성
     public init() {}
 
-    /// 전달된 로그 이벤트를 무시합니다.
+    /// 전달 log event 무시
     public func log(_ event: NXLogEvent) async {}
 }

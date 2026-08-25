@@ -8,7 +8,7 @@
 import Foundation
 
 struct NXLoggerInterceptor: NXHTTPInterceptor {
-    // 요청 생명주기 로그를 기록하는 interceptor
+    // 요청 lifecycle log 기록 interceptor
     func intercept(
         context: NXRequestExecutionContext,
         next: @escaping @Sendable (NXRequestExecutionContext) async throws -> NXRawResponse

@@ -30,9 +30,9 @@ struct NXCacheRevalidationContext: Sendable {
 }
 
 actor NXResponseCacheStore {
-    // cache 키별 응답과 만료 시각을 보관하는 저장소
+    // cache key별 응답과 만료 시각 보관 store
     private var responses: [NXRequestCacheKey: CachedResponse] = [:]
-    // cache 키별 진행 중 요청 작업을 보관하는 저장소
+    // cache key별 진행 중 요청 task 보관 store
     private var inFlightTasks: [NXRequestCacheKey: Task<NXRawResponse, any Error>] = [:]
 
     // cache 조회와 저장을 조정하는 메서드
@@ -44,7 +44,7 @@ actor NXResponseCacheStore {
         load: @escaping @Sendable (NXCacheRevalidationContext?) async throws -> NXRawResponse
     ) async throws -> NXRawResponse {
         let now = Date()
-        // 만료 응답과 validator를 전달하는 재검증 문맥
+        // 만료 응답과 validator 전달 revalidation context
         var revalidationContext: NXCacheRevalidationContext?
 
         if let cachedResponse = responses[key] {

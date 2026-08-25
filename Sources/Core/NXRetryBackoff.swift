@@ -7,11 +7,11 @@
 
 import Foundation
 
-/// 재시도 간격에 사용되는 지연 전략입니다.
+/// retry 간격 delay 전략
 public enum NXRetryBackoff: Sendable {
-    /// 매 재시도마다 고정 지연을 사용합니다.
+    /// retry 시 고정 delay 사용
     case fixed(TimeInterval)
-    /// 매 시도마다 지연을 두 배로 늘려 최대 지연에 도달할 때까지 반복합니다.
+    /// 최대 delay 도달 시까지 시도별 두 배 delay 증가
     case exponential(base: TimeInterval, maxDelay: TimeInterval)
 
     func delay(forAttempt attemptNumber: Int) -> TimeInterval {
