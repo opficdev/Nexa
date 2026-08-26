@@ -19,6 +19,8 @@ Nexa는 HTTP 의미를 보존하기 위해 캐시 응답과 진행 중 작업의
 - [Endpoint API](#endpoint-api)
 - [요청 전환](#요청-전환)
 - [설정](#설정)
+- [구조화된 로깅](#구조화된-로깅)
+- [오류 처리](#오류-처리)
 - [전송 측정값](#전송-측정값)
 - [인증 토큰 갱신](#인증-토큰-갱신)
 - [응답 캐시](#응답-캐시)
@@ -363,6 +365,41 @@ let client = NXAPIClient(configuration: configuration)
 - 토큰 갱신 및 재시도 처리
 - 스터빙 및 격리 테스트를 위한 커스텀 transport
 
+## 구조화된 로깅
+
+`NXLogger`는 하나의 논리 요청을 `requestIdentifier`로 연결하고 재시도 정책의 시도 번호를 `attemptNumber`로 전달합니다. `attemptNumber`는 1부터 시작하며 Bearer token 갱신 뒤의 요청 재전송에서는 증가하지 않습니다.
+
+| 이벤트 | 발생 시점 | 주요 값 |
+| --- | --- | --- |
+| `requestStart` | 로거 이후의 요청 실행 전 | 요청 식별자, 시도 번호, method, URL, header |
+| `requestEnd` | 로거 이후 실행에서 응답 반환 | 요청 식별자, 시도 번호, 상태 코드, 경과 시간, 응답 데이터 크기 |
+| `requestFailure` | 로거 이후의 interceptor 또는 transport에서 오류 발생 | 요청 식별자, 시도 번호, 경과 시간, 오류 설명 |
+| `retry` | 다음 retry 시도 예약 | 요청 식별자, 다음 시도 번호, 대기 시간 |
+| `authRefresh` | 실제 Bearer token 갱신 완료 | 갱신을 시작한 요청 식별자, 성공 여부 |
+
+`requestStart`의 header에서는 `Authorization`과 `Cookie` 값만 대소문자와 관계없이 `<redacted>`로 바뀝니다. URL query, 오류 설명, 다른 사용자 정의 민감 header는 자동으로 가려지지 않으므로 logger로 전달하기 전에 별도 보호가 필요합니다.
+
+`NXLogger.log(_:)` 호출은 요청 실행 경로에서 기다립니다. 로거의 처리 시간이 길면 요청 실행과 retry 또는 인증 갱신 흐름도 지연될 수 있습니다. 응답 검증과 decoding은 logger 이후에 실행되므로 `requestFailure`가 모든 최종 `NXError`를 나타내지는 않습니다.
+
+## 오류 처리
+
+Nexa의 공개 요청은 조립, 인증, 전송, 응답 검증, decoding 단계의 오류를 `NXError`로 구분합니다.
+
+| 오류 | 발생 조건 |
+| --- | --- |
+| `invalidRequest` | 유효한 URL 조립 실패 또는 interceptor의 HTTP method 변경 |
+| `authenticationRequired` | 인증 요청에서 현재 Bearer token을 제공하지 못함 |
+| `authProviderUnavailable` | `.authorized()` 요청에 `NXAuthTokenProvider`가 설정되지 않음 |
+| `timeout` | `URLError.timedOut` 발생 |
+| `cancelled` | `URLError.cancelled` 또는 Swift Task 취소 발생 |
+| `transport` | timeout과 cancellation 외 `URLError` 발생 |
+| `invalidStatus` | 응답 상태가 validation policy에 포함되지 않고 사용자 정의 서버 오류로 변환되지 않음 |
+| `server` | 응답 검증 정책이 거부한 응답을 `NXServerErrorDecoder`가 사용자 정의 오류로 변환함 |
+| `decoding` | 성공 응답을 요청한 `Decodable` type으로 변환하지 못함 |
+| `unknown` | 위 범주에 포함되지 않은 오류 발생 |
+
+응답 검증 정책이 상태 코드를 거부하면 `NXServerErrorDecoder`가 먼저 실행됩니다. decoder가 오류를 반환하면 `server`, 반환하지 않으면 `invalidStatus`로 매핑됩니다.
+
 ## 전송 측정값
 
 `NXURLSessionTransport`는 `URLSession` task마다 `NXNetworkMetrics` snapshot 하나를 `NXNetworkMetricsObserver`에 전달할 수 있습니다. snapshot에는 task duration, redirect 수, transaction 수, 수집 순서를 보존한 `NXNetworkTransactionMetrics` 값이 포함됩니다.
@@ -388,7 +425,7 @@ snapshot은 `NXURLSessionTransport`만 수집합니다. 커스텀 `NXHTTPTranspo
 
 하나의 `NXAPIClient`에서 생성한 `.authorized()` 요청이 동시에 `401` 응답을 받으면 진행 중인 토큰 갱신 결과 하나를 공유합니다. 해당 client의 값 복사본과 여기서 파생한 builder도 같은 갱신을 공유합니다. 별도로 생성한 `NXAPIClient`는 독립된 갱신 수명을 가집니다.
 
-`NXAuthTokenProvider`의 `currentAccessToken()`, `refreshAccessToken()` 요구 사항은 바뀌지 않습니다. 각 요청은 `nil`이 아닌 갱신 결과 뒤 최대 한 번만 재전송합니다. `nil` 갱신 결과는 해당 요청의 원래 `401` 응답을 반환하고, 갱신 오류는 Nexa의 기존 오류 매핑을 따릅니다.
+`NXAuthTokenProvider`의 `currentAccessToken()`, `refreshAccessToken()` 요구 사항은 바뀌지 않습니다. 각 요청은 `nil`이 아닌 갱신 결과 뒤 최대 한 번만 재전송합니다. `nil` 갱신 결과에서는 인증 interceptor가 원래 `401` 응답을 유지하지만, 기본 응답 검증을 사용하는 공개 `send()`에서는 `NXError.invalidStatus`로 매핑될 수 있습니다. 갱신 오류는 Nexa의 기존 오류 매핑을 따릅니다.
 
 한 호출자의 취소는 공유 갱신이나 다른 대기 요청을 취소하지 않습니다. `NXAuthRefreshLog`는 실제 갱신 한 번당 한 번 기록되고, `requestIdentifier`는 해당 갱신을 시작한 요청의 식별자입니다.
 

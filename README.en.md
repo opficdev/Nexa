@@ -19,6 +19,8 @@ Nexa preserves HTTP semantics by defining explicit boundaries for sharing cached
 - [Endpoint API](#endpoint-api)
 - [Request Migration](#request-migration)
 - [Configuration](#configuration)
+- [Structured Logging](#structured-logging)
+- [Error Handling](#error-handling)
 - [Transport Metrics](#transport-metrics)
 - [Authentication Refresh](#authentication-refresh)
 - [Response Cache](#response-cache)
@@ -363,6 +365,41 @@ Nexa currently supports:
 - Token refresh and retry handling
 - Custom transports for stubbing and isolated tests
 
+## Structured Logging
+
+`NXLogger` connects one logical request through `requestIdentifier` and reports the retry-policy attempt through `attemptNumber`. Attempt numbers start at 1 and do not increase when a request is replayed after a Bearer token refresh.
+
+| Event | When emitted | Main values |
+| --- | --- | --- |
+| `requestStart` | Before execution below the logger | Request identifier, attempt number, method, URL, headers |
+| `requestEnd` | When execution below the logger returns a response | Request identifier, attempt number, status code, elapsed time, payload size |
+| `requestFailure` | When a lower interceptor or transport throws | Request identifier, attempt number, elapsed time, error description |
+| `retry` | When the next retry attempt is scheduled | Request identifier, next attempt number, delay |
+| `authRefresh` | When an actual Bearer token refresh completes | Identifier of the request that started the refresh, success state |
+
+Only `Authorization` and `Cookie` values in `requestStart` headers are replaced with `<redacted>`, regardless of header-name casing. URL queries, error descriptions, and other custom sensitive headers are not redacted automatically and require protection before they reach the logger.
+
+Request execution awaits `NXLogger.log(_:)`. A slow logger can therefore delay request execution, retry scheduling, or authentication refresh. Response validation and decoding occur after the logger, so `requestFailure` does not represent every final `NXError`.
+
+## Error Handling
+
+Public Nexa requests classify errors from request assembly, authentication, transport, response validation, and decoding as `NXError`.
+
+| Case | When it occurs |
+| --- | --- |
+| `invalidRequest` | URL assembly fails or an interceptor changes the HTTP method |
+| `authenticationRequired` | An authenticated request cannot obtain a current Bearer token |
+| `authProviderUnavailable` | `.authorized()` is used without an `NXAuthTokenProvider` |
+| `timeout` | `URLError.timedOut` occurs |
+| `cancelled` | `URLError.cancelled` or Swift Task cancellation occurs |
+| `transport` | A `URLError` other than timeout or cancellation occurs |
+| `invalidStatus` | The response status is rejected by validation and is not converted into a custom server error |
+| `server` | `NXServerErrorDecoder` converts a response rejected by the validation policy into a custom error |
+| `decoding` | A successful response cannot be decoded into the requested `Decodable` type |
+| `unknown` | An error does not match any category above |
+
+When the response validation policy rejects a status code, `NXServerErrorDecoder` runs first. The result maps to `server` when the decoder returns an error and to `invalidStatus` otherwise.
+
 ## Transport Metrics
 
 `NXURLSessionTransport` can forward one `NXNetworkMetrics` snapshot to an `NXNetworkMetricsObserver` for each `URLSession` task. The snapshot contains task duration, redirect count, transaction count, and ordered `NXNetworkTransactionMetrics` values.
@@ -388,7 +425,7 @@ Only `NXURLSessionTransport` collects these snapshots. A custom `NXHTTPTransport
 
 Concurrent `401` responses from `.authorized()` requests created by one `NXAPIClient` share one in-progress token refresh. Copies of that client and builders derived from it share the same refresh. A separately initialized `NXAPIClient` has an independent refresh lifetime.
 
-`NXAuthTokenProvider` keeps the same `currentAccessToken()` and `refreshAccessToken()` requirements. Each request retries at most once after a non-`nil` refresh result. A `nil` refresh result returns the request's original `401` response, and a refresh error follows Nexa's existing error mapping.
+`NXAuthTokenProvider` keeps the same `currentAccessToken()` and `refreshAccessToken()` requirements. Each request retries at most once after a non-`nil` refresh result. For a `nil` refresh result, the authentication interceptor preserves the original `401` response, but a public `send()` using default response validation can map it to `NXError.invalidStatus`. A refresh error follows Nexa's existing error mapping.
 
 Cancelling one caller does not cancel the shared refresh or the other waiting requests. `NXAuthRefreshLog` is emitted once per actual refresh; its `requestIdentifier` is the identifier of the request that started that refresh.
 
