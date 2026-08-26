@@ -485,6 +485,8 @@ The public `NXRetryPolicy` constructor, `NXRetryPolicy.Backoff`, `NXRetryPolicy.
 
 `NXHTTPInterceptor.replacingRequest(_:)` can change a request URL, headers, and body, but the request method must remain equal to the configured method. A different method ends the chain with `NXError.invalidRequest` before later interceptors, logging, caching, or transport.
 
+`NXRequestExecutionContext.requestIdentifier` remains stable for one logical request and its retry attempts. `attemptNumber` starts at 1 and represents the retry-policy attempt; it does not increase when a request is replayed after a Bearer token refresh.
+
 ## Development
 
 Nexa keeps SwiftLint out of the distributable package graph so package consumers do not inherit maintainer lint rules.

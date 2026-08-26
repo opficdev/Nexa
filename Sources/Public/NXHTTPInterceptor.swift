@@ -43,7 +43,8 @@ public protocol NXHTTPInterceptor: Sendable {
 
 /// interceptor 노출용 현재 요청 실행 상태 snapshot
 ///
-/// `NXRequestExecutionContext`의 준비된 요청, 요청 식별자, retry 시도 번호, 사용자 정의 metadata를 interceptor에서 조회 가능
+/// `NXRequestExecutionContext`의 준비된 요청, 요청 식별자, retry 시도 번호를 interceptor에서 조회 가능
+/// `userInfo`는 현재 공개 request builder에서 설정되지 않아 빈 dictionary로 전달
 public struct NXRequestExecutionContext: Sendable {
     /// 현재 실행 중인 요청
     public let request: URLRequest
@@ -51,7 +52,7 @@ public struct NXRequestExecutionContext: Sendable {
     public let requestIdentifier: UUID
     /// 현재 시도 번호(`1`부터 시작)
     public let attemptNumber: Int
-    /// 요청 바인딩용 사용자 정의 문자열 metadata 값
+    /// 현재 공개 request builder에서 설정되지 않아 빈 dictionary로 전달되는 metadata 값
     public let userInfo: [String: String]
 
     let specification: RequestSpec

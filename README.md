@@ -485,6 +485,8 @@ Nexa 1.3에서는 공개 `NXRetryPolicy` 생성자, `NXRetryPolicy.Backoff`, `NX
 
 `NXHTTPInterceptor.replacingRequest(_:)`는 request URL, header, body를 바꿀 수 있지만 method는 설정한 method와 같아야 합니다. 다른 method는 이후 interceptor, logger, cache, transport 실행 전에 `NXError.invalidRequest`로 종료됩니다.
 
+`NXRequestExecutionContext.requestIdentifier`는 하나의 논리 요청과 해당 retry 시도에서 유지됩니다. `attemptNumber`는 1부터 시작하는 retry policy의 시도 번호이며 Bearer token 갱신 뒤의 재전송에서는 증가하지 않습니다.
+
 ## 개발
 
 Nexa는 배포되는 package graph에서 SwiftLint를 분리하여 패키지 소비자가 maintainer용 lint 규칙을 함께 받지 않도록 구성합니다.
