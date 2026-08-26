@@ -9,6 +9,8 @@
 
 Nexa is a SwiftUI-inspired declarative networking library built on `URLSession`.
 
+Nexa preserves HTTP semantics by defining explicit boundaries for sharing cached responses and in-flight work, deciding when failed requests may be retried, and observing `URLSession` transport. The alternatives, reasoning, and verification for each decision are documented in the [design stories (Korean)](https://github.com/opficdev/Nexa/wiki/설계-스토리).
+
 - [Features](#features)
 - [Requirements](#requirements)
 - [Installation](#installation)
