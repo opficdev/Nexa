@@ -40,7 +40,7 @@ public protocol NXEndpoint {
     associatedtype Response: Decodable
     /// 요청에 사용되는 HTTP 메서드
     var method: NXHTTPMethod { get }
-    /// client 기본 URL 기준 상대 경로
+    /// client 기본 URL 기준 상대 경로 또는 scheme 포함 절대 URL 문자열
     var path: String { get }
     /// 전송 전 endpoint별 customization을 builder에 적용
     ///

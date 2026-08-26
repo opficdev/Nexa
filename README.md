@@ -270,6 +270,15 @@ let createdUser = try await client
 	.send(as: User.self)
 ```
 
+### 요청 경로
+
+상대 경로는 `baseURL`의 기존 path 뒤에 결합되고 builder query는 기존 query 뒤에 추가됩니다. `client.get()`처럼 경로를 생략하면 `baseURL`에 포함된 path를 그대로 요청합니다.
+
+scheme을 포함한 절대 URL 문자열은 `baseURL` 대신 사용되며 해당 URL의 기존 query 뒤에 builder query가 추가됩니다.
+
+> [!WARNING]
+> 절대 URL에도 client 공통 header와 요청 header, 전역 및 요청 interceptor가 그대로 적용됩니다. `.authorized()` 요청은 Bearer token도 적용하므로 신뢰하는 host에만 절대 URL을 사용해야 합니다. 인증이나 민감 header가 설정된 client에서 다른 host의 절대 URL을 요청하지 마세요.
+
 ## Endpoint API
 
 Moya 스타일의 엔드포인트 추상화를 선호한다면, `NXEndpoint`를 정의하여 응답 타입을 엔드포인트에 직접 연결할 수 있습니다. `NXTypedRequestBuilder` 설정 계약은 소스 호환성을 위해 유지됩니다.

@@ -270,6 +270,15 @@ let createdUser = try await client
 	.send(as: User.self)
 ```
 
+### Request Paths
+
+A relative path is appended to the existing path in `baseURL`, and builder query items are appended to its existing query. Calling `client.get()` without a path requests the path already contained in `baseURL`.
+
+A string containing an absolute URL with a scheme replaces `baseURL`, and builder query items are appended after the URL's existing query.
+
+> [!WARNING]
+> Client-wide and request headers and global and request interceptors still apply to an absolute URL. An `.authorized()` request also applies its Bearer token. Use absolute URLs only for trusted hosts, and do not send a cross-host absolute URL through a client configured with authentication or sensitive headers.
+
 ## Endpoint API
 
 If you prefer a Moya-style endpoint abstraction, define an `NXEndpoint` and let Nexa keep the response type attached to the endpoint itself. Its `NXTypedRequestBuilder` configuration contract remains available for source compatibility.

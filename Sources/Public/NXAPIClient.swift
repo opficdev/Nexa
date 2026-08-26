@@ -11,7 +11,10 @@ import Foundation
 ///
 /// ## 개요
 ///
-/// client 단일 생성 후 상대 경로 기반 요청 시작
+/// client 단일 생성 후 상대 경로 또는 scheme 포함 절대 URL 문자열 기반 요청 시작
+///
+/// 절대 URL 문자열은 기본 URL을 대체하지만 client 공통 header, interceptor, 인증 정책은 유지
+/// 인증이나 민감 header가 설정된 client에서는 신뢰하는 host에만 절대 URL 사용
 ///
 /// cache 사용 시 각 `NXAPIClient` 초기화마다 독립 메모리 cache와 진행 중 request store 생성. cache 응답 공유는 서비스 또는 DI 계층에서 client 단일 재사용으로 보장. 동일 client 값 복사본은 동일 store 유지
 ///
@@ -72,7 +75,8 @@ public struct NXAPIClient: Sendable {
 
     /// 지정 경로 기준 type 미지정 `GET` request builder 생성
     ///
-    /// - Parameter path: 설정된 기본 URL 기준 상대 경로
+    /// - Parameter path: 설정된 기본 URL 기준 상대 경로 또는 scheme 포함 절대 URL 문자열
+    ///   빈 값은 기본 URL path 유지
     /// - Returns: 전송 전 추가 설정 가능한 request builder
     public func get(_ path: String = "") -> NXRequestBuilder {
         request(method: .get, path: path)
@@ -81,7 +85,7 @@ public struct NXAPIClient: Sendable {
     /// 지정 경로 기준 type 지정 `GET` request builder 생성
     ///
     /// - Parameters:
-    ///   - path: 설정된 기본 URL 기준 상대 경로
+    ///   - path: 설정된 기본 URL 기준 상대 경로 또는 scheme 포함 절대 URL 문자열. 빈 값은 기본 URL path 유지
     ///   - type: 성공 응답 decoding 대상 type
     /// - Returns: `Response` decoding type 지정 request builder
     @available(*, deprecated, message: "Use get(_:) followed by send(as:).")
@@ -94,7 +98,7 @@ public struct NXAPIClient: Sendable {
 
     /// 지정 경로 기준 type 미지정 `POST` request builder 생성
     ///
-    /// - Parameter path: 설정된 기본 URL 기준 상대 경로
+    /// - Parameter path: 설정된 기본 URL 기준 상대 경로 또는 scheme 포함 절대 URL 문자열
     /// - Returns: 전송 전 추가 설정 가능한 request builder
     public func post(_ path: String) -> NXRequestBuilder {
         request(method: .post, path: path)
@@ -103,7 +107,7 @@ public struct NXAPIClient: Sendable {
     /// 지정 경로 기준 type 지정 `POST` request builder 생성
     ///
     /// - Parameters:
-    ///   - path: 설정된 기본 URL 기준 상대 경로
+    ///   - path: 설정된 기본 URL 기준 상대 경로 또는 scheme 포함 절대 URL 문자열
     ///   - type: 성공 응답 decoding 대상 type
     /// - Returns: `Response` decoding type 지정 request builder
     @available(*, deprecated, message: "Use post(_:) followed by send(as:).")
@@ -113,7 +117,7 @@ public struct NXAPIClient: Sendable {
 
     /// 지정 경로 기준 type 미지정 `PUT` request builder 생성
     ///
-    /// - Parameter path: 설정된 기본 URL 기준 상대 경로
+    /// - Parameter path: 설정된 기본 URL 기준 상대 경로 또는 scheme 포함 절대 URL 문자열
     /// - Returns: 전송 전 추가 설정 가능한 request builder
     public func put(_ path: String) -> NXRequestBuilder {
         request(method: .put, path: path)
@@ -122,7 +126,7 @@ public struct NXAPIClient: Sendable {
     /// 지정 경로 기준 type 지정 `PUT` request builder 생성
     ///
     /// - Parameters:
-    ///   - path: 설정된 기본 URL 기준 상대 경로
+    ///   - path: 설정된 기본 URL 기준 상대 경로 또는 scheme 포함 절대 URL 문자열
     ///   - type: 성공 응답 decoding 대상 type
     /// - Returns: `Response` decoding type 지정 request builder
     @available(*, deprecated, message: "Use put(_:) followed by send(as:).")
@@ -132,7 +136,7 @@ public struct NXAPIClient: Sendable {
 
     /// 지정 경로 기준 type 미지정 `PATCH` request builder 생성
     ///
-    /// - Parameter path: 설정된 기본 URL 기준 상대 경로
+    /// - Parameter path: 설정된 기본 URL 기준 상대 경로 또는 scheme 포함 절대 URL 문자열
     /// - Returns: 전송 전 추가 설정 가능한 request builder
     public func patch(_ path: String) -> NXRequestBuilder {
         request(method: .patch, path: path)
@@ -141,7 +145,7 @@ public struct NXAPIClient: Sendable {
     /// 지정 경로 기준 type 지정 `PATCH` request builder 생성
     ///
     /// - Parameters:
-    ///   - path: 설정된 기본 URL 기준 상대 경로
+    ///   - path: 설정된 기본 URL 기준 상대 경로 또는 scheme 포함 절대 URL 문자열
     ///   - type: 성공 응답 decoding 대상 type
     /// - Returns: `Response` decoding type 지정 request builder
     @available(*, deprecated, message: "Use patch(_:) followed by send(as:).")
@@ -151,7 +155,7 @@ public struct NXAPIClient: Sendable {
 
     /// 지정 경로 기준 type 미지정 `DELETE` request builder 생성
     ///
-    /// - Parameter path: 설정된 기본 URL 기준 상대 경로
+    /// - Parameter path: 설정된 기본 URL 기준 상대 경로 또는 scheme 포함 절대 URL 문자열
     /// - Returns: 전송 전 추가 설정 가능한 request builder
     public func delete(_ path: String) -> NXRequestBuilder {
         request(method: .delete, path: path)
@@ -160,7 +164,7 @@ public struct NXAPIClient: Sendable {
     /// 지정 경로 기준 type 지정 `DELETE` request builder 생성
     ///
     /// - Parameters:
-    ///   - path: 설정된 기본 URL 기준 상대 경로
+    ///   - path: 설정된 기본 URL 기준 상대 경로 또는 scheme 포함 절대 URL 문자열
     ///   - type: 성공 응답 decoding 대상 type
     /// - Returns: `Response` decoding type 지정 request builder
     @available(*, deprecated, message: "Use delete(_:) followed by send(as:).")
