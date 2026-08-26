@@ -11,7 +11,7 @@
 - Explicit type annotation only when required.
 - New Swift file header author as `opfic`.
 - Clear expression available case prefers `<` or `<=` over `>` or `>=`.
-- Public API change requires DocC documentation, public test coverage, and `README.md` or `README.ko.md` review.
+- Public API change requires DocC documentation, public test coverage, and `README.md` or `README.en.md` review.
 - `Sendable`, actor isolation, cancellation, and error mapping as explicit review points for concurrency changes.
 
 ## Documentation and response

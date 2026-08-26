@@ -5,7 +5,7 @@
 | Change | Required checks |
 | --- | --- |
 | Swift source or test | `swift build`, `swift test`, changed-file SwiftLint when available |
-| Public API or DocC | `swift build`, `swift test`, `README.md` and `README.ko.md` review |
+| Public API or DocC | `swift build`, `swift test`, `README.md` and `README.en.md` review |
 | Package manifest | `swift build`, `swift test`, package dependency diff review |
 | AI workflow documents or agent TOML | Baseline diff, staged diff, untracked Markdown/TOML format checks, role-model-fallback checks |
 | CI workflow | YAML review and affected workflow check when available |
