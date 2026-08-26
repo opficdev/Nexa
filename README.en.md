@@ -52,7 +52,7 @@ Nexa preserves HTTP semantics by defining explicit boundaries for sharing cached
 
 ### Swift Package Manager
 
-Add Nexa to your `Package.swift`:
+Add Nexa to your `Package.swift`
 
 ```swift
 dependencies: [
@@ -60,7 +60,7 @@ dependencies: [
 ]
 ```
 
-Then add `Nexa` to your target dependencies:
+Then add `Nexa` to your target dependencies
 
 ```swift
 .target(
@@ -102,7 +102,7 @@ The rest of the public surface is made of extension points for auth, logging, te
 
 Assume `client` below is an `NXAPIClient` that has already been configured.
 
-Use `NXAPIClient` + `NXRequestBuilder` for most application code:
+Use `NXAPIClient` + `NXRequestBuilder` for most application code
 
 ```swift
 import Foundation
@@ -118,7 +118,7 @@ let user = try await client
 	.send(as: User.self)
 ```
 
-When the destination type supplies the decoding context, `send()` can remain concise:
+When the destination type supplies the decoding context, `send()` can remain concise
 
 ```swift
 let user: User = try await client
@@ -126,7 +126,7 @@ let user: User = try await client
 	.send()
 ```
 
-Use `NXRequestBuilder` when you want to inspect the request or handle the raw response yourself:
+Use `NXRequestBuilder` when you want to inspect the request or handle the raw response yourself
 
 ```swift
 import Foundation
@@ -144,7 +144,7 @@ let response = try await client
 	.send()
 ```
 
-Use `NXEndpoint` when the same endpoint shape is reused in several places:
+Use `NXEndpoint` when the same endpoint shape is reused in several places
 
 ```swift
 import Foundation
@@ -248,7 +248,7 @@ let user = try await client
 
 Add `.authorized()` only when the client has an `authTokenProvider`.
 
-You can also build requests step by step:
+You can also build requests step by step
 
 ```swift
 import Foundation

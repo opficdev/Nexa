@@ -52,7 +52,7 @@ Nexa는 HTTP 의미를 보존하기 위해 캐시 응답과 진행 중 작업의
 
 ### Swift Package Manager
 
-`Package.swift`에 Nexa를 추가하세요:
+`Package.swift`에 Nexa를 추가하세요
 
 ```swift
 dependencies: [
@@ -60,7 +60,7 @@ dependencies: [
 ]
 ```
 
-그런 다음 타겟 의존성에 `Nexa`를 추가하세요:
+그런 다음 타겟 의존성에 `Nexa`를 추가하세요
 
 ```swift
 .target(
@@ -248,7 +248,7 @@ let user = try await client
 
 `.authorized()`는 클라이언트에 `authTokenProvider`가 설정된 경우에만 추가하세요.
 
-단계별로 요청을 구성할 수도 있습니다:
+단계별로 요청을 구성할 수도 있습니다
 
 ```swift
 import Foundation
