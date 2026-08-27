@@ -7,7 +7,7 @@
 
 import Foundation
 
-/// Nexa 요청 body 표현 방식
+/// Nexa 요청 본문 표현 방식
 public enum NXRequestBody: Sendable {
     case data(Data)
 

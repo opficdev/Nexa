@@ -7,9 +7,9 @@
 
 import Foundation
 
-/// 응답 상태 코드 성공 validation 규칙
+/// 응답 상태 코드 유효성 검사 규칙
 public enum NXValidationPolicy: Sendable {
-    /// 상태 코드 validation 비활성화
+    /// 상태 코드 유효성 검사 비활성화
     case none
     /// `200..<300` 범위 상태 코드만 허용
     case successStatusCode

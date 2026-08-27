@@ -7,7 +7,7 @@
 
 import Foundation
 
-/// Nexa request builder 지원 HTTP method
+/// Nexa가 요청 빌더에서 지원하는 HTTP 메서드
 public enum NXHTTPMethod: String, Sendable, Hashable {
     case get = "GET"
     case post = "POST"

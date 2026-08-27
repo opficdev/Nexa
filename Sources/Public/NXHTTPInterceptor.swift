@@ -11,7 +11,7 @@ import Foundation
 ///
 /// ## 개요
 ///
-/// 추적, 사용자 정의 header, 응답 관찰 같은 횡단 관심사 처리용 interceptor 구현. 요청 URL/header/body 변경 허용, 설정된 HTTP method 보존
+/// 추적, 사용자 정의 헤더, 응답 관찰 같은 횡단 관심사를 처리하는 인터셉터 구현. 요청 URL, 헤더, 본문 변경을 허용하고 설정된 HTTP 메서드 보존
 ///
 /// ```swift
 /// import Foundation
@@ -33,18 +33,18 @@ public protocol NXHTTPInterceptor: Sendable {
     ///
     /// - Parameters:
     ///   - context: 현재 요청 실행 상태
-    ///   - next: interceptor chain 연결 closure
-    /// - Returns: 현재 interceptor 또는 이후 단계 생성 `NXRawResponse`
+    ///   - next: 인터셉터 체인을 연결하는 클로저
+    /// - Returns: 현재 인터셉터 또는 이후 단계가 생성한 `NXRawResponse`
     func intercept(
         context: NXRequestExecutionContext,
         next: @escaping @Sendable (NXRequestExecutionContext) async throws -> NXRawResponse
     ) async throws -> NXRawResponse
 }
 
-/// interceptor 노출용 현재 요청 실행 상태 snapshot
+/// 인터셉터에 제공하는 현재 요청 실행 상태 스냅샷
 ///
-/// `NXRequestExecutionContext`의 준비된 요청, 요청 식별자, retry 시도 번호를 interceptor에서 조회 가능
-/// `userInfo`는 현재 공개 request builder에서 설정되지 않아 빈 dictionary로 전달
+/// `NXRequestExecutionContext`의 준비된 요청, 요청 식별자, 재시도 번호를 인터셉터에서 조회 가능
+/// `userInfo`는 현재 공개 요청 빌더에서 설정되지 않아 빈 딕셔너리로 전달
 public struct NXRequestExecutionContext: Sendable {
     /// 현재 실행 중인 요청
     public let request: URLRequest
@@ -52,19 +52,19 @@ public struct NXRequestExecutionContext: Sendable {
     public let requestIdentifier: UUID
     /// 현재 시도 번호(`1`부터 시작)
     public let attemptNumber: Int
-    /// 현재 공개 request builder에서 설정되지 않아 빈 dictionary로 전달되는 metadata 값
+    /// 현재 공개 요청 빌더에서 설정되지 않아 빈 딕셔너리로 전달되는 메타데이터 값
     public let userInfo: [String: String]
 
     let specification: RequestSpec
     let clientConfiguration: NXClientConfiguration
     let authRefreshCoordinator: NXAuthRefreshCoordinator
 
-    /// 대체 요청 기반 context 사본 생성
+    /// 대체 요청을 기반으로 실행 상태 사본 생성
     ///
-    /// - Parameter request: 이후 chain에서 사용할 대체 요청(`httpMethod`는 설정된 요청 method와 동일)
-    /// - Returns: 갱신된 요청 포함 신규 실행 context
+    /// - Parameter request: 이후 체인에서 사용할 대체 요청(`httpMethod`는 설정된 요청 메서드와 동일)
+    /// - Returns: 갱신된 요청을 포함한 신규 실행 상태
     ///
-    /// `httpMethod` 값 불일치 또는 누락 요청 전달 시, 이후 interceptor/logging/cache/transport 이전 ``NXError/invalidRequest(_:)`` 실행 종료
+    /// `httpMethod` 값이 다르거나 누락된 요청을 전달하면 이후 인터셉터, 로깅, 캐시, 전송이 실행되기 전에 ``NXError/invalidRequest(_:)``로 종료
     public func replacingRequest(_ request: URLRequest) -> Self {
         Self(
             request: request,
