@@ -7,25 +7,25 @@
 
 import Foundation
 
-/// `URLRequest` 실행 네트워크 transport 추상화
+/// `URLRequest`를 실행하는 네트워크 전송 추상화
 ///
 /// ## 개요
 ///
-/// 테스트에서 네트워크 응답 stub 처리 또는 기본 `URLSession` transport 교체 시 `NXHTTPTransport` 채택
+/// 테스트에서 네트워크 응답을 스텁으로 처리하거나 기본 `URLSession` 전송을 교체할 때 `NXHTTPTransport` 채택
 public protocol NXHTTPTransport: Sendable {
-    /// 준비된 요청 transport 및 `NXRawResponse` 반환
+    /// 준비된 요청을 전송하고 `NXRawResponse` 반환
     func send(_ request: URLRequest) async throws -> NXRawResponse
 }
 
-/// 실패한 서버 응답의 도메인별 오류 decoding
+/// 실패한 서버 응답의 도메인별 오류 디코딩
 public protocol NXServerErrorDecoder: Sendable {
-    /// 실패한 HTTP 응답 기반 사용자 정의 오류 decoding 시도
+    /// 실패한 HTTP 응답을 기반으로 사용자 정의 오류 디코딩 시도
     func decodeServerError(data: Data, response: HTTPURLResponse, decoder: JSONDecoder) -> (any Error)?
 }
 
-/// 사용자 정의 오류 미생성 기본 서버 오류 decoder
+/// 사용자 정의 오류를 생성하지 않는 기본 서버 오류 디코더
 public struct NXDefaultServerErrorDecoder: NXServerErrorDecoder {
-    /// 기본 서버 오류 decoder initialization
+    /// 기본 서버 오류 디코더 초기화
     public init() {}
 
     /// 항상 `nil` 반환
@@ -34,11 +34,11 @@ public struct NXDefaultServerErrorDecoder: NXServerErrorDecoder {
     }
 }
 
-/// 인증 요청·토큰 갱신용 베어러 token provider
+/// 인증 요청과 토큰 갱신을 위한 Bearer 토큰 제공자
 ///
 /// ## 개요
 ///
-/// `.authorized()` 사용 시 `NXAuthTokenProvider` 구성 point
+/// `.authorized()` 사용 시 `NXAuthTokenProvider` 구성 지점
 ///
 /// ```swift
 /// import Nexa

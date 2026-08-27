@@ -7,14 +7,14 @@
 
 import Foundation
 
-/// decoding 전 반환용 HTTP 응답 container
+/// 디코딩 전에 반환하는 HTTP 응답 컨테이너
 public struct NXRawResponse: Sendable {
-    /// 응답 body data
+    /// 응답 본문 데이터
     public var data: Data
-    /// body 연계 HTTP 응답
+    /// 본문과 연결된 HTTP 응답
     public var response: HTTPURLResponse
 
-    /// HTTP 응답 container 생성
+    /// HTTP 응답 컨테이너 생성
     public init(data: Data, response: HTTPURLResponse) {
         self.data = data
         self.response = response

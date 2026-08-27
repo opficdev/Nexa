@@ -6,7 +6,7 @@ Declarative networking built around value-semantic request builders, typed decod
 
 Start with ``NXClientConfiguration`` to define your shared transport, auth, logging, and serialization behavior.
 
-Use ``NXAPIClient`` to create an ``NXRequestBuilder`` from a relative path. Call ``NXRequestBuilder/send()`` for an ``NXRawResponse``, or ``NXRequestBuilder/send(as:)`` to decode a response in the same request path.
+Use ``NXAPIClient`` to create an ``NXRequestBuilder`` from a relative path or an absolute URL string. Call ``NXRequestBuilder/send()`` for an ``NXRawResponse``, or ``NXRequestBuilder/send(as:)`` to decode a response in the same request path.
 
 Adopt ``NXEndpoint`` when a request shape should be reusable and carry its response type with it. Its existing ``NXTypedRequestBuilder`` configuration contract remains available for endpoint compatibility.
 
@@ -35,6 +35,12 @@ let user = try await client
 	.accept("application/json")
 	.send(as: User.self)
 ```
+
+## Request Paths
+
+A relative path is appended to the path in ``NXClientConfiguration/baseURL``, while `get()` without a path uses the base URL path unchanged. Builder query items follow any query already present in the selected URL.
+
+A string containing an absolute URL with a scheme replaces the base URL. Client-wide and request headers, global and request interceptors, and `.authorized()` Bearer tokens still apply. Use absolute URLs only for trusted hosts, and do not send cross-host absolute URLs through a client configured with authentication or sensitive headers.
 
 ## Raw Response
 

@@ -7,13 +7,16 @@
 
 import Foundation
 
-/// 단일 client 설정 기반 HTTP 요청 구성·전송 공용 진입점
+/// 단일 클라이언트 설정을 기반으로 HTTP 요청을 구성하고 전송하는 공용 진입점
 ///
 /// ## 개요
 ///
-/// client 단일 생성 후 상대 경로 기반 요청 시작
+/// 클라이언트를 한 번 생성한 뒤 상대 경로나 스킴을 포함한 절대 URL 문자열로 요청 시작
 ///
-/// cache 사용 시 각 `NXAPIClient` 초기화마다 독립 메모리 cache와 진행 중 request store 생성. cache 응답 공유는 서비스 또는 DI 계층에서 client 단일 재사용으로 보장. 동일 client 값 복사본은 동일 store 유지
+/// 절대 URL 문자열은 기본 URL을 대체하지만 클라이언트 공통 헤더, 인터셉터, 인증 정책은 유지
+/// 인증이나 민감한 헤더가 설정된 클라이언트에서는 신뢰하는 호스트에만 절대 URL 사용
+///
+/// 캐시 사용 시 각 `NXAPIClient` 초기화마다 독립된 메모리 캐시와 진행 중 요청 저장소 생성. 캐시 응답 공유는 서비스 또는 의존성 주입 계층에서 클라이언트를 재사용해 보장. 동일한 클라이언트 값의 복사본은 같은 저장소 유지
 ///
 /// ```swift
 /// import Foundation
@@ -35,15 +38,15 @@ import Foundation
 ///     .send(as: User.self)
 /// ```
 ///
-/// 직접 요청은 method 기반 builder 경로, `NXEndpoint`는 type 지정 builder 구성 contract의 source 호환성 유지
+/// 직접 요청은 메서드 기반 빌더 경로를 사용하고 `NXEndpoint`는 타입 지정 빌더 구성 계약의 소스 호환성 유지
 public struct NXAPIClient: Sendable {
     private let configuration: NXClientConfiguration
     private let responseCacheStore: NXResponseCacheStore?
     private let authRefreshCoordinator: NXAuthRefreshCoordinator
 
-    /// 모든 요청 공통 설정 반영 client 생성
+    /// 모든 요청의 공통 설정을 반영한 클라이언트 생성
     ///
-    /// - Parameter configuration: 기본 URL, transport, logger, `NXAuthTokenProvider` 같은 공용 설정
+    /// - Parameter configuration: 기본 URL, 전송, 로거, `NXAuthTokenProvider` 같은 공용 설정
     public init(configuration: NXClientConfiguration) {
         self.init(
             configuration: configuration,
@@ -70,20 +73,21 @@ public struct NXAPIClient: Sendable {
         }
     }
 
-    /// 지정 경로 기준 type 미지정 `GET` request builder 생성
+    /// 지정 경로를 기준으로 타입을 지정하지 않은 `GET` 요청 빌더 생성
     ///
-    /// - Parameter path: 설정된 기본 URL 기준 상대 경로
-    /// - Returns: 전송 전 추가 설정 가능한 request builder
+    /// - Parameter path: 설정된 기본 URL을 기준으로 하는 상대 경로 또는 스킴을 포함한 절대 URL 문자열
+    ///   빈 값은 기본 URL 경로 유지
+    /// - Returns: 전송 전에 추가로 설정할 수 있는 요청 빌더
     public func get(_ path: String = "") -> NXRequestBuilder {
         request(method: .get, path: path)
     }
 
-    /// 지정 경로 기준 type 지정 `GET` request builder 생성
+    /// 지정 경로를 기준으로 타입을 지정한 `GET` 요청 빌더 생성
     ///
     /// - Parameters:
-    ///   - path: 설정된 기본 URL 기준 상대 경로
-    ///   - type: 성공 응답 decoding 대상 type
-    /// - Returns: `Response` decoding type 지정 request builder
+    ///   - path: 설정된 기본 URL을 기준으로 하는 상대 경로 또는 스킴을 포함한 절대 URL 문자열. 빈 값은 기본 URL 경로 유지
+    ///   - type: 성공 응답 디코딩 대상 타입
+    /// - Returns: `Response` 디코딩 타입을 지정한 요청 빌더
     @available(*, deprecated, message: "Use get(_:) followed by send(as:).")
     public func get<Response: Decodable>(
         _ path: String = "",
@@ -92,94 +96,94 @@ public struct NXAPIClient: Sendable {
         typedRequest(method: .get, path: path)
     }
 
-    /// 지정 경로 기준 type 미지정 `POST` request builder 생성
+    /// 지정 경로를 기준으로 타입을 지정하지 않은 `POST` 요청 빌더 생성
     ///
-    /// - Parameter path: 설정된 기본 URL 기준 상대 경로
-    /// - Returns: 전송 전 추가 설정 가능한 request builder
+    /// - Parameter path: 설정된 기본 URL을 기준으로 하는 상대 경로 또는 스킴을 포함한 절대 URL 문자열
+    /// - Returns: 전송 전에 추가로 설정할 수 있는 요청 빌더
     public func post(_ path: String) -> NXRequestBuilder {
         request(method: .post, path: path)
     }
 
-    /// 지정 경로 기준 type 지정 `POST` request builder 생성
+    /// 지정 경로를 기준으로 타입을 지정한 `POST` 요청 빌더 생성
     ///
     /// - Parameters:
-    ///   - path: 설정된 기본 URL 기준 상대 경로
-    ///   - type: 성공 응답 decoding 대상 type
-    /// - Returns: `Response` decoding type 지정 request builder
+    ///   - path: 설정된 기본 URL을 기준으로 하는 상대 경로 또는 스킴을 포함한 절대 URL 문자열
+    ///   - type: 성공 응답 디코딩 대상 타입
+    /// - Returns: `Response` 디코딩 타입을 지정한 요청 빌더
     @available(*, deprecated, message: "Use post(_:) followed by send(as:).")
     public func post<Response: Decodable>(_ path: String, as type: Response.Type) -> NXTypedRequestBuilder<Response> {
         typedRequest(method: .post, path: path)
     }
 
-    /// 지정 경로 기준 type 미지정 `PUT` request builder 생성
+    /// 지정 경로를 기준으로 타입을 지정하지 않은 `PUT` 요청 빌더 생성
     ///
-    /// - Parameter path: 설정된 기본 URL 기준 상대 경로
-    /// - Returns: 전송 전 추가 설정 가능한 request builder
+    /// - Parameter path: 설정된 기본 URL을 기준으로 하는 상대 경로 또는 스킴을 포함한 절대 URL 문자열
+    /// - Returns: 전송 전에 추가로 설정할 수 있는 요청 빌더
     public func put(_ path: String) -> NXRequestBuilder {
         request(method: .put, path: path)
     }
 
-    /// 지정 경로 기준 type 지정 `PUT` request builder 생성
+    /// 지정 경로를 기준으로 타입을 지정한 `PUT` 요청 빌더 생성
     ///
     /// - Parameters:
-    ///   - path: 설정된 기본 URL 기준 상대 경로
-    ///   - type: 성공 응답 decoding 대상 type
-    /// - Returns: `Response` decoding type 지정 request builder
+    ///   - path: 설정된 기본 URL을 기준으로 하는 상대 경로 또는 스킴을 포함한 절대 URL 문자열
+    ///   - type: 성공 응답 디코딩 대상 타입
+    /// - Returns: `Response` 디코딩 타입을 지정한 요청 빌더
     @available(*, deprecated, message: "Use put(_:) followed by send(as:).")
     public func put<Response: Decodable>(_ path: String, as type: Response.Type) -> NXTypedRequestBuilder<Response> {
         typedRequest(method: .put, path: path)
     }
 
-    /// 지정 경로 기준 type 미지정 `PATCH` request builder 생성
+    /// 지정 경로를 기준으로 타입을 지정하지 않은 `PATCH` 요청 빌더 생성
     ///
-    /// - Parameter path: 설정된 기본 URL 기준 상대 경로
-    /// - Returns: 전송 전 추가 설정 가능한 request builder
+    /// - Parameter path: 설정된 기본 URL을 기준으로 하는 상대 경로 또는 스킴을 포함한 절대 URL 문자열
+    /// - Returns: 전송 전에 추가로 설정할 수 있는 요청 빌더
     public func patch(_ path: String) -> NXRequestBuilder {
         request(method: .patch, path: path)
     }
 
-    /// 지정 경로 기준 type 지정 `PATCH` request builder 생성
+    /// 지정 경로를 기준으로 타입을 지정한 `PATCH` 요청 빌더 생성
     ///
     /// - Parameters:
-    ///   - path: 설정된 기본 URL 기준 상대 경로
-    ///   - type: 성공 응답 decoding 대상 type
-    /// - Returns: `Response` decoding type 지정 request builder
+    ///   - path: 설정된 기본 URL을 기준으로 하는 상대 경로 또는 스킴을 포함한 절대 URL 문자열
+    ///   - type: 성공 응답 디코딩 대상 타입
+    /// - Returns: `Response` 디코딩 타입을 지정한 요청 빌더
     @available(*, deprecated, message: "Use patch(_:) followed by send(as:).")
     public func patch<Response: Decodable>(_ path: String, as type: Response.Type) -> NXTypedRequestBuilder<Response> {
         typedRequest(method: .patch, path: path)
     }
 
-    /// 지정 경로 기준 type 미지정 `DELETE` request builder 생성
+    /// 지정 경로를 기준으로 타입을 지정하지 않은 `DELETE` 요청 빌더 생성
     ///
-    /// - Parameter path: 설정된 기본 URL 기준 상대 경로
-    /// - Returns: 전송 전 추가 설정 가능한 request builder
+    /// - Parameter path: 설정된 기본 URL을 기준으로 하는 상대 경로 또는 스킴을 포함한 절대 URL 문자열
+    /// - Returns: 전송 전에 추가로 설정할 수 있는 요청 빌더
     public func delete(_ path: String) -> NXRequestBuilder {
         request(method: .delete, path: path)
     }
 
-    /// 지정 경로 기준 type 지정 `DELETE` request builder 생성
+    /// 지정 경로를 기준으로 타입을 지정한 `DELETE` 요청 빌더 생성
     ///
     /// - Parameters:
-    ///   - path: 설정된 기본 URL 기준 상대 경로
-    ///   - type: 성공 응답 decoding 대상 type
-    /// - Returns: `Response` decoding type 지정 request builder
+    ///   - path: 설정된 기본 URL을 기준으로 하는 상대 경로 또는 스킴을 포함한 절대 URL 문자열
+    ///   - type: 성공 응답 디코딩 대상 타입
+    /// - Returns: `Response` 디코딩 타입을 지정한 요청 빌더
     @available(*, deprecated, message: "Use delete(_:) followed by send(as:).")
     public func delete<Response: Decodable>(_ path: String, as type: Response.Type) -> NXTypedRequestBuilder<Response> {
         typedRequest(method: .delete, path: path)
     }
 
-    /// endpoint에서 type 지정 요청 구성
+    /// 엔드포인트에서 타입을 지정한 요청 구성
     ///
-    /// - Parameter endpoint: HTTP method, 경로, 선택적 요청 customization 정의 endpoint
-    /// - Returns: endpoint 기반 type 지정 request builder
+    /// - Parameter endpoint: HTTP 메서드, 경로, 선택적 요청 설정을 정의한 엔드포인트
+    /// - Returns: 엔드포인트 기반 타입 지정 요청 빌더
     public func request<E: NXEndpoint>(_ endpoint: E) -> NXTypedRequestBuilder<E.Response> {
         endpoint.configure(typedRequest(method: endpoint.method, path: endpoint.path))
     }
 
-    /// endpoint 요청 전송 및 응답 decoding
+    /// 엔드포인트 요청 전송 및 응답 디코딩
     ///
-    /// - Parameter endpoint: 요청 동작 정의 endpoint
-    /// - Returns: endpoint 응답 decoding 결과
+    /// - Parameter endpoint: 요청 동작을 정의한 엔드포인트
+    /// - Returns: 엔드포인트 응답 디코딩 결과
     public func send<E: NXEndpoint>(_ endpoint: E) async throws -> E.Response {
         try await request(endpoint).requestBuilder.send(as: E.Response.self)
     }

@@ -5,10 +5,10 @@
 //  Created by opfic on 8/23/26.
 //
 
-/// `NXURLSessionTransport` 수집 metrics snapshot 수신 대상
+/// `NXURLSessionTransport`가 수집한 측정값 스냅샷을 받는 대상
 ///
-/// 요청 완료 및 logger event 순서와 독립적 metrics 전달
+/// 요청 완료 및 로거 이벤트 순서와 관계없이 측정값 전달
 public protocol NXNetworkMetricsObserver: Sendable {
-    /// 네트워크 metrics snapshot 단건 기록
+    /// 네트워크 측정값 스냅샷 하나 기록
     func record(_ metrics: NXNetworkMetrics) async
 }

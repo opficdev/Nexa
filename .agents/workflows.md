@@ -92,7 +92,7 @@ Non-trivial design and implementation work sequence:
 
 - Documentation Writer checks actual diff before PR or release text.
 - User text-only request as direct text output without file creation.
-- `README.md` and `README.ko.md` parity review for public API documentation.
+- `README.md` and `README.en.md` parity review for public API documentation.
 
 ## AI workflow maintenance
 
