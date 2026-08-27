@@ -15,6 +15,7 @@ Nexa preserves HTTP semantics by defining explicit boundaries for sharing cached
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Public API](#public-api)
+- [Request Flow](#request-flow)
 - [Quick Start](#quick-start)
 - [Endpoint API](#endpoint-api)
 - [Request Migration](#request-migration)
@@ -25,6 +26,8 @@ Nexa preserves HTTP semantics by defining explicit boundaries for sharing cached
 - [Authentication Refresh](#authentication-refresh)
 - [Response Cache](#response-cache)
 - [Retry Policy](#retry-policy)
+- [Nexa 1.3 Migration](#nexa-13-migration)
+- [Interceptor Method Contract](#interceptor-method-contract)
 - [Development](#development)
 - [Testing](#testing)
 
@@ -83,7 +86,7 @@ The rest of the public surface is made of extension points for auth, logging, te
 | --- | --- | --- |
 | `NXAPIClient` | Main entry point for requests that share one `baseURL` and one configuration | `client.get("/users").send(as: User.self)` |
 | `NXRequestBuilder` | When you need a prepared `URLRequest`, `NXRawResponse`, or a decoded `Decodable` response | `try await client.get("/users").send()` |
-| `NXTypedRequestBuilder<Response>` | Endpoint configuration compatibility boundary | `func configure(_ builder: NXTypedRequestBuilder<User>) -> NXTypedRequestBuilder<User>` |
+| `NXTypedRequestBuilder<Response>` | When maintaining `NXEndpoint` configuration compatibility | `func configure(_ builder: NXTypedRequestBuilder<User>) -> NXTypedRequestBuilder<User>` |
 | `NXEndpoint` | When an endpoint definition should be reusable and carry its response type with it | `try await client.send(UserEndpoint(identifier: 1))` |
 | `NXClientConfiguration` | When shared headers, transport, logger, auth, encoder, decoder, or interceptors should be configured once | `NXClientConfiguration(baseURL: url, authTokenProvider: yourAuthTokenProvider)` |
 | `NXCache` | When successful unauthenticated `GET` responses should be reused for a TTL or revalidated with validators | `NXClientConfiguration(baseURL: url, cache: .revalidatingMemory(ttl: 300))` |
@@ -207,7 +210,7 @@ flowchart TB
         sharedState[Client-Owned Shared State<br/>Optional Response Cache Store<br/>Auth Refresh Coordinator]
         executor[NXRequestExecutor]
         assembler[NXRequestAssembler]
-        interceptors[NXInterceptorChain<br/>Retry → Auth → Client Interceptors → Request Interceptors → Logging → Optional Response Cache]
+        interceptors[NXInterceptorChain<br/>Retry → Auth → Client Interceptors<br/>Request Interceptors → Logging → Optional Response Cache]
         configuredTransport[Configured Transport Implementation]
         validation[NXResponsePipeline<br/>Response Validation]
         decoding[NXResponsePipeline<br/>Optional Response Decoding]

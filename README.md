@@ -15,6 +15,7 @@ Nexa는 HTTP 의미를 보존하기 위해 캐시 응답과 진행 중 작업의
 - [요구 사항](#요구-사항)
 - [설치](#설치)
 - [공개 API](#공개-api)
+- [요청 흐름](#요청-흐름)
 - [빠른 시작](#빠른-시작)
 - [Endpoint API](#endpoint-api)
 - [요청 전환](#요청-전환)
@@ -25,6 +26,8 @@ Nexa는 HTTP 의미를 보존하기 위해 캐시 응답과 진행 중 작업의
 - [인증 토큰 갱신](#인증-토큰-갱신)
 - [응답 캐시](#응답-캐시)
 - [재시도 정책](#재시도-정책)
+- [Nexa 1.3 전환](#nexa-13-전환)
+- [Interceptor 메서드 계약](#interceptor-메서드-계약)
 - [개발](#개발)
 - [테스트](#테스트)
 
@@ -83,7 +86,7 @@ dependencies: [
 | --- | --- | --- |
 | `NXAPIClient` | 동일한 `baseURL`과 설정을 공유하는 요청의 주 진입점 | `client.get("/users").send(as: User.self)` |
 | `NXRequestBuilder` | `URLRequest`, `NXRawResponse`, 또는 디코딩된 `Decodable` 응답이 필요할 때 | `try await client.get("/users").send()` |
-| `NXTypedRequestBuilder<Response>` | 엔드포인트 설정 호환성 경계 | `func configure(_ builder: NXTypedRequestBuilder<User>) -> NXTypedRequestBuilder<User>` |
+| `NXTypedRequestBuilder<Response>` | `NXEndpoint` 구성 호환성을 유지할 때 | `func configure(_ builder: NXTypedRequestBuilder<User>) -> NXTypedRequestBuilder<User>` |
 | `NXEndpoint` | 엔드포인트 정의를 재사용하고 응답 타입을 함께 관리할 때 | `try await client.send(UserEndpoint(identifier: 1))` |
 | `NXClientConfiguration` | 공통 헤더, 전송, 로거, 인증, 인코더, 디코더, 인터셉터를 한 번에 설정할 때 | `NXClientConfiguration(baseURL: url, authTokenProvider: yourAuthTokenProvider)` |
 | `NXCache` | 인증이 필요 없는 성공한 `GET` 응답을 TTL 동안 재사용하거나 식별값을 사용해 재검증할 때 | `NXClientConfiguration(baseURL: url, cache: .revalidatingMemory(ttl: 300))` |
@@ -207,7 +210,7 @@ flowchart TB
         sharedState[클라이언트 공유 상태<br/>선택적 응답 캐시 저장소<br/>인증 갱신 조정자]
         executor[NXRequestExecutor]
         assembler[NXRequestAssembler]
-        interceptors[NXInterceptorChain<br/>재시도 → 인증 → 클라이언트 인터셉터 → 요청 인터셉터 → 로깅 → 선택적 응답 캐시]
+        interceptors[NXInterceptorChain<br/>재시도 → 인증 → 클라이언트 인터셉터<br/>요청 인터셉터 → 로깅 → 선택적 응답 캐시]
         configuredTransport[설정된 전송 구현]
         validation[NXResponsePipeline<br/>응답 검증]
         decoding[NXResponsePipeline<br/>선택적 응답 디코딩]
