@@ -18,7 +18,7 @@ public enum NXLogEvent: Sendable {
 
 /// 요청 시도 시작 시점의 구조화된 페이로드
 public struct NXRequestStartLog: Sendable {
-    /// 동일한 논리 요청 시도 간 공유 안정적 식별자
+    /// 요청 빌더 생성 시 부여되며 같은 빌더의 복사본과 반복 `send()`, 재시도, Bearer 토큰 갱신 뒤 재전송에서 유지되는 식별자
     public let requestIdentifier: UUID
     /// 현재 시도 번호(`1`부터 시작)
     public let attemptNumber: Int
@@ -47,7 +47,7 @@ public struct NXRequestStartLog: Sendable {
 
 /// 요청 성공 종료 시점의 구조화된 페이로드
 public struct NXRequestEndLog: Sendable {
-    /// 동일한 논리 요청 시도 간 공유 안정적 식별자
+    /// 요청 빌더 생성 시 부여되며 같은 빌더의 복사본과 반복 `send()`, 재시도, Bearer 토큰 갱신 뒤 재전송에서 유지되는 식별자
     public let requestIdentifier: UUID
     /// 현재 시도 번호(`1`부터 시작)
     public let attemptNumber: Int
@@ -76,7 +76,7 @@ public struct NXRequestEndLog: Sendable {
 
 /// 요청 실패 시점의 구조화된 페이로드
 public struct NXRequestFailureLog: Sendable {
-    /// 동일한 논리 요청 시도 간 공유 안정적 식별자
+    /// 요청 빌더 생성 시 부여되며 같은 빌더의 복사본과 반복 `send()`, 재시도, Bearer 토큰 갱신 뒤 재전송에서 유지되는 식별자
     public let requestIdentifier: UUID
     /// 현재 시도 번호(`1`부터 시작)
     public let attemptNumber: Int
@@ -101,7 +101,7 @@ public struct NXRequestFailureLog: Sendable {
 
 /// Nexa가 다음 재시도를 예약할 때 출력하는 구조화된 페이로드
 public struct NXRetryLog: Sendable {
-    /// 동일한 논리 요청 시도 간 공유 안정적 식별자
+    /// 요청 빌더 생성 시 부여되며 같은 빌더의 복사본과 반복 `send()`, 재시도, Bearer 토큰 갱신 뒤 재전송에서 유지되는 식별자
     public let requestIdentifier: UUID
     /// 다음 실행 시도 번호
     public let nextAttemptNumber: Int

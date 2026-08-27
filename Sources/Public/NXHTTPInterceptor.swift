@@ -48,7 +48,7 @@ public protocol NXHTTPInterceptor: Sendable {
 public struct NXRequestExecutionContext: Sendable {
     /// 현재 실행 중인 요청
     public let request: URLRequest
-    /// 동일 논리 요청 전체 시도에서 공유되는 안정적 식별자
+    /// 요청 빌더 생성 시 부여되며 같은 빌더의 복사본과 반복 `send()`, 재시도, Bearer 토큰 갱신 뒤 재전송에서 유지되는 식별자
     public let requestIdentifier: UUID
     /// 현재 시도 번호(`1`부터 시작)
     public let attemptNumber: Int

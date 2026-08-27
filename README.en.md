@@ -384,7 +384,7 @@ Nexa currently supports:
 
 ## Structured Logging
 
-`NXLogger` connects one logical request through `requestIdentifier` and reports the retry-policy attempt through `attemptNumber`. Attempt numbers start at 1 and do not increase when a request is replayed after a Bearer token refresh.
+`NXLogger` records the `requestIdentifier` assigned when a request builder is created. Copies of the same builder and repeated `send()` calls keep the same identifier, as do retry attempts and replays after a Bearer token refresh. `attemptNumber` starts at 1 and increases only for retry-policy attempts; it does not increase for a replay after a Bearer token refresh.
 
 | Event | When emitted | Main values |
 | --- | --- | --- |
@@ -502,7 +502,7 @@ The public `NXRetryPolicy` constructor, `NXRetryPolicy.Backoff`, `NXRetryPolicy.
 
 `NXHTTPInterceptor.replacingRequest(_:)` can change a request URL, headers, and body, but the request method must remain equal to the configured method. A different method ends the chain with `NXError.invalidRequest` before later interceptors, logging, caching, or transport.
 
-`NXRequestExecutionContext.requestIdentifier` remains stable for one logical request and its retry attempts. `attemptNumber` starts at 1 and represents the retry-policy attempt; it does not increase when a request is replayed after a Bearer token refresh.
+`NXRequestExecutionContext.requestIdentifier` is assigned when a request builder is created and remains stable across copies of that builder, repeated `send()` calls, retry attempts, and replays after a Bearer token refresh. `attemptNumber` starts at 1 and increases only for retry-policy attempts; it does not increase for a replay after a Bearer token refresh.
 
 ## Development
 

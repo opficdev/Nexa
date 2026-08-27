@@ -384,7 +384,7 @@ let client = NXAPIClient(configuration: configuration)
 
 ## 구조화된 로깅
 
-`NXLogger`는 하나의 논리 요청을 `requestIdentifier`로 연결하고 재시도 정책의 시도 번호를 `attemptNumber`로 전달합니다. `attemptNumber`는 1부터 시작하며 Bearer 토큰 갱신 뒤의 요청 재전송에서는 증가하지 않습니다.
+`NXLogger`는 요청 빌더 생성 시 부여된 `requestIdentifier`를 기록합니다. 같은 빌더의 복사본과 반복 `send()` 호출은 같은 식별자를 유지하며, 재시도와 Bearer 토큰 갱신 뒤 재전송에서도 유지됩니다. `attemptNumber`는 1부터 시작해 재시도 정책에 따른 시도에서만 증가하며 Bearer 토큰 갱신 뒤 재전송에서는 증가하지 않습니다.
 
 | 이벤트 | 발생 시점 | 주요 값 |
 | --- | --- | --- |
@@ -502,7 +502,7 @@ Nexa 1.3에서는 공개 `NXRetryPolicy` 생성자, `NXRetryPolicy.Backoff`, `NX
 
 `NXHTTPInterceptor.replacingRequest(_:)`는 요청 URL, 헤더, 본문을 바꿀 수 있지만 메서드는 설정한 메서드와 같아야 합니다. 다른 메서드는 이후 인터셉터, 로거, 캐시, 전송이 실행되기 전에 `NXError.invalidRequest`로 종료됩니다.
 
-`NXRequestExecutionContext.requestIdentifier`는 하나의 논리 요청과 해당 재시도에서 유지됩니다. `attemptNumber`는 1부터 시작하는 재시도 정책의 시도 번호이며 Bearer 토큰 갱신 뒤의 재전송에서는 증가하지 않습니다.
+`NXRequestExecutionContext.requestIdentifier`는 요청 빌더 생성 시 부여되며 같은 빌더의 복사본과 반복 `send()` 호출, 재시도, Bearer 토큰 갱신 뒤 재전송에서 유지됩니다. `attemptNumber`는 1부터 시작해 재시도 정책에 따른 시도에서만 증가하며 Bearer 토큰 갱신 뒤 재전송에서는 증가하지 않습니다.
 
 ## 개발
 
