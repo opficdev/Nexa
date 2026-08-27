@@ -227,8 +227,8 @@ flowchart TB
     configuredTransport --> validation
     interceptors -->|전송 없이 응답| validation
 
-    validation -->|send()| rawResponse[원시 응답<br/>NXRawResponse]
-    validation -->|send(as:)| decoding
+    validation -->|원시 응답 반환| rawResponse[원시 응답<br/>NXRawResponse]
+    validation -->|응답 디코딩| decoding
     decoding --> decodedResponse[디코딩된 응답<br/>Response]
 
     extensionPoints -.->|인터셉터, 인증, 로깅| interceptors

@@ -227,8 +227,8 @@ flowchart TB
     configuredTransport --> validation
     interceptors -->|response without transport| validation
 
-    validation -->|send()| rawResponse[Raw Response<br/>NXRawResponse]
-    validation -->|send(as:)| decoding
+    validation -->|raw response| rawResponse[Raw Response<br/>NXRawResponse]
+    validation -->|response decoding| decoding
     decoding --> decodedResponse[Decoded Response<br/>Response]
 
     extensionPoints -.->|interceptor, auth, logging| interceptors
