@@ -188,6 +188,8 @@ flowchart TB
         client
         builder[NXRequestBuilder<br/>NXTypedRequestBuilder]
         endpoint[NXEndpoint]
+        extensionPoints[Public Extension Contracts<br/>NXHTTPTransport, NXHTTPInterceptor,<br/>NXAuthTokenProvider, NXLogger, NXServerErrorDecoder]
+
         client --> builder
         client --> endpoint
         endpoint --> builder
@@ -196,30 +198,42 @@ flowchart TB
     subgraph core[Core Model]
         configuration[NXClientConfiguration]
         requestSpec[RequestSpec]
-        extensionPoints[Extension Points<br/>transport, interceptor, auth, logger, error decoder]
     end
 
     client --> configuration
     builder --> requestSpec
 
     subgraph runtime[Execution Layer]
-        assembler[NXRequestAssembler]
+        sharedState[Client-Owned Shared State<br/>Optional Response Cache Store<br/>Auth Refresh Coordinator]
         executor[NXRequestExecutor]
-        interceptors[NXInterceptorChain<br/>retry, auth, logging, cache]
-        transport[NXHTTPTransport]
-        pipeline[NXResponsePipeline]
+        assembler[NXRequestAssembler]
+        interceptors[NXInterceptorChain<br/>Retry → Auth → Client Interceptors → Request Interceptors → Logging → Optional Response Cache]
+        configuredTransport[Configured Transport Implementation]
+        validation[NXResponsePipeline<br/>Response Validation]
+        decoding[NXResponsePipeline<br/>Optional Response Decoding]
     end
 
-    builder --> assembler --> executor
+    client -->|owns| sharedState
+    sharedState -.->|passed to execution via builder| executor
+
+    builder --> executor
     configuration --> executor
     requestSpec --> executor
-    executor --> interceptors --> transport --> pipeline
-    pipeline --> rawResponse[Raw Response<br/>NXRawResponse]
-    pipeline --> decodedResponse[Decoded Response<br/>Response]
 
-    extensionPoints -.-> interceptors
-    extensionPoints -.-> transport
-    extensionPoints -.-> pipeline
+    executor -->|assembles request| assembler
+    assembler -->|assembled URLRequest| interceptors
+
+    interceptors -->|transport needed| configuredTransport
+    configuredTransport --> validation
+    interceptors -->|response without transport| validation
+
+    validation -->|send()| rawResponse[Raw Response<br/>NXRawResponse]
+    validation -->|send(as:)| decoding
+    decoding --> decodedResponse[Decoded Response<br/>Response]
+
+    extensionPoints -.->|interceptor, auth, logging| interceptors
+    extensionPoints -.->|transport| configuredTransport
+    extensionPoints -.->|error decoder| validation
 ```
 
 ## Quick Start

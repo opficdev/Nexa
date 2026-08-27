@@ -188,6 +188,8 @@ flowchart TB
         client
         builder[NXRequestBuilder<br/>NXTypedRequestBuilder]
         endpoint[NXEndpoint]
+        extensionPoints[공개 확장 계약<br/>NXHTTPTransport, NXHTTPInterceptor,<br/>NXAuthTokenProvider, NXLogger, NXServerErrorDecoder]
+
         client --> builder
         client --> endpoint
         endpoint --> builder
@@ -196,30 +198,42 @@ flowchart TB
     subgraph core[핵심 모델]
         configuration[NXClientConfiguration]
         requestSpec[RequestSpec]
-        extensionPoints[확장 지점<br/>전송, 인터셉터, 인증, 로깅, 오류 디코더]
     end
 
     client --> configuration
     builder --> requestSpec
 
     subgraph runtime[실행 계층]
-        assembler[NXRequestAssembler]
+        sharedState[클라이언트 공유 상태<br/>선택적 응답 캐시 저장소<br/>인증 갱신 조정자]
         executor[NXRequestExecutor]
-        interceptors[NXInterceptorChain<br/>재시도, 인증, 로깅, 응답 캐시]
-        transport[NXHTTPTransport]
-        pipeline[NXResponsePipeline]
+        assembler[NXRequestAssembler]
+        interceptors[NXInterceptorChain<br/>재시도 → 인증 → 클라이언트 인터셉터 → 요청 인터셉터 → 로깅 → 선택적 응답 캐시]
+        configuredTransport[설정된 전송 구현]
+        validation[NXResponsePipeline<br/>응답 검증]
+        decoding[NXResponsePipeline<br/>선택적 응답 디코딩]
     end
 
-    builder --> assembler --> executor
+    client -->|소유| sharedState
+    sharedState -.->|빌더를 거쳐 실행에 전달| executor
+
+    builder --> executor
     configuration --> executor
     requestSpec --> executor
-    executor --> interceptors --> transport --> pipeline
-    pipeline --> rawResponse[원시 응답<br/>NXRawResponse]
-    pipeline --> decodedResponse[디코딩된 응답<br/>Response]
 
-    extensionPoints -.-> interceptors
-    extensionPoints -.-> transport
-    extensionPoints -.-> pipeline
+    executor -->|요청 조립| assembler
+    assembler -->|조립한 URLRequest| interceptors
+
+    interceptors -->|전송 필요| configuredTransport
+    configuredTransport --> validation
+    interceptors -->|전송 없이 응답| validation
+
+    validation -->|send()| rawResponse[원시 응답<br/>NXRawResponse]
+    validation -->|send(as:)| decoding
+    decoding --> decodedResponse[디코딩된 응답<br/>Response]
+
+    extensionPoints -.->|인터셉터, 인증, 로깅| interceptors
+    extensionPoints -.->|전송| configuredTransport
+    extensionPoints -.->|오류 디코더| validation
 ```
 
 ## 빠른 시작
